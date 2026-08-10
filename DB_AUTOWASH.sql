@@ -77,7 +77,40 @@ GO
 
 
 -- =============================================
--- 5. BẢNG BOOKING / LỊCH SỬ RỬA XE
+-- 5. BẢNG NHÂN VIÊN (STAFF) - [BẢNG MỚI]
+-- =============================================
+CREATE TABLE Staff (
+    StaffID INT IDENTITY(1,1) PRIMARY KEY,
+    FullName NVARCHAR(100) NOT NULL,
+    PhoneNumber VARCHAR(15) UNIQUE NOT NULL,
+    
+    Role VARCHAR(50) DEFAULT 'Washer'
+        CHECK (Role IN ('Washer', 'Manager', 'Admin')),
+
+    IsActive BIT DEFAULT 1, -- 1: Đang làm việc, 0: Đã nghỉ
+    CreatedAt DATETIME DEFAULT GETDATE()
+);
+GO
+
+
+-- =============================================
+-- 6. BẢNG KHUNG GIỜ (TIMESLOTS) - [BẢNG MỚI]
+-- =============================================
+CREATE TABLE TimeSlots (
+    SlotID INT IDENTITY(1,1) PRIMARY KEY,
+    
+    StartTime TIME NOT NULL, -- Giờ bắt đầu (VD: 08:00)
+    EndTime TIME NOT NULL,   -- Giờ kết thúc (VD: 10:00)
+    Capacity INT NOT NULL,   -- Sức chứa (VD: nhận tối đa 5 xe)
+    
+    IsActive BIT DEFAULT 1,  -- Bật/tắt khung giờ
+    CreatedAt DATETIME DEFAULT GETDATE()
+);
+GO
+
+
+-- =============================================
+-- 7. BẢNG BOOKING / LỊCH SỬ RỬA XE (ĐÃ CẬP NHẬT)
 -- =============================================
 CREATE TABLE Bookings (
     BookingID INT IDENTITY(1,1) PRIMARY KEY,
@@ -85,32 +118,35 @@ CREATE TABLE Bookings (
     CustomerID INT NOT NULL,
     VehicleID INT NOT NULL,
     PromotionID INT NULL,
+    
+    SlotID INT NOT NULL,     -- Khóa ngoại nối vào khung giờ
+    StaffID INT NULL,        -- Nhân viên nhận rửa (Khách đặt online thì NULL)
 
-    -- Thời gian khách đặt lịch
-    BookingTime DATETIME NOT NULL,
+    -- Thời gian khách đặt lịch (Chỉ lấy ngày)
+    BookingDate DATE NOT NULL,
 
     -- Thời gian thực tế hoàn thành việc rửa
     ActualWashTime DATETIME NULL,
 
+    -- Thêm trạng thái CheckedIn và Washing cho đúng flow
     Status VARCHAR(20) DEFAULT 'Pending'
-        CHECK (Status IN ('Pending', 'Completed', 'Cancelled', 'NoShow')),
+        CHECK (Status IN ('Pending', 'CheckedIn', 'Washing', 'Completed', 'Cancelled', 'NoShow')),
 
     CreatedAt DATETIME DEFAULT GETDATE(),
 
-    FOREIGN KEY (CustomerID)
-        REFERENCES Customers(CustomerID),
-
-    FOREIGN KEY (VehicleID)
-        REFERENCES Vehicles(VehicleID),
-
-    FOREIGN KEY (PromotionID)
-        REFERENCES Promotions(PromotionID)
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID),
+    FOREIGN KEY (VehicleID) REFERENCES Vehicles(VehicleID),
+    FOREIGN KEY (PromotionID) REFERENCES Promotions(PromotionID),
+    
+    -- Ràng buộc 2 bảng mới
+    FOREIGN KEY (SlotID) REFERENCES TimeSlots(SlotID),
+    FOREIGN KEY (StaffID) REFERENCES Staff(StaffID)
 );
 GO
 
 
 -- =============================================
--- 6. BẢNG SỔ CÁI ĐIỂM
+-- 8. BẢNG SỔ CÁI ĐIỂM
 -- =============================================
 CREATE TABLE PointLedger (
     TransactionID INT IDENTITY(1,1) PRIMARY KEY,
@@ -130,10 +166,7 @@ CREATE TABLE PointLedger (
 
     CreatedAt DATETIME DEFAULT GETDATE(),
 
-    FOREIGN KEY (CustomerID)
-        REFERENCES Customers(CustomerID),
-
-    FOREIGN KEY (BookingID)
-        REFERENCES Bookings(BookingID)
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID),
+    FOREIGN KEY (BookingID) REFERENCES Bookings(BookingID)
 );
 GO
