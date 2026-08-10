@@ -18,6 +18,7 @@ GO
 CREATE TABLE Customers (
     CustomerID INT IDENTITY(1,1) PRIMARY KEY,
     PhoneNumber VARCHAR(15) NOT NULL UNIQUE,
+    PasswordHash NVARCHAR(MAX) NOT NULL,
     FullName NVARCHAR(100) NOT NULL,
 
     CurrentTier VARCHAR(20) DEFAULT 'Member'
@@ -97,6 +98,7 @@ CREATE TABLE Staff (
     StaffID INT IDENTITY(1,1) PRIMARY KEY,
     FullName NVARCHAR(100) NOT NULL,
     PhoneNumber VARCHAR(15) UNIQUE NOT NULL,
+    PasswordHash NVARCHAR(MAX) NOT NULL,
     
     Role VARCHAR(50) DEFAULT 'Washer'
         CHECK (Role IN ('Washer', 'Manager', 'Admin')),

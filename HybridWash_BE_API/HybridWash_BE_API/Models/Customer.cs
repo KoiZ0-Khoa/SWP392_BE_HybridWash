@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace HybridWash_BE_API.Models;
@@ -8,6 +8,8 @@ public partial class Customer
     public int CustomerId { get; set; }
 
     public string PhoneNumber { get; set; } = null!;
+
+    public string PasswordHash { get; set; } = null!;
 
     public string FullName { get; set; } = null!;
 

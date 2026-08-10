@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace HybridWash_BE_API.Models;
@@ -10,6 +10,8 @@ public partial class Staff
     public string FullName { get; set; } = null!;
 
     public string PhoneNumber { get; set; } = null!;
+
+    public string PasswordHash { get; set; } = null!;
 
     public string? Role { get; set; }
 
