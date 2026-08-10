@@ -1,14 +1,14 @@
 -- =============================================
 -- DATABASE SETUP SCRIPT - SQL SERVER
--- PROJECT: AUTOWASH PRO
+-- PROJECT: AUTOWASH
 -- =============================================
 
 -- 1. Tạo Database
-CREATE DATABASE AutoWashPro;
+CREATE DATABASE AUTOWASH;
 GO
 
 -- Chuyển sang Database vừa tạo
-USE AutoWashPro;
+USE AUTOWASH;
 GO
 
 
