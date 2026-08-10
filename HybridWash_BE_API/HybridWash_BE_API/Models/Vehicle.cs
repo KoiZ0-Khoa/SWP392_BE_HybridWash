@@ -1,0 +1,25 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace HybridWash_BE_API.Models;
+
+public partial class Vehicle
+{
+    public int VehicleId { get; set; }
+
+    public int CustomerId { get; set; }
+
+    public string LicensePlate { get; set; } = null!;
+
+    public string? VehicleType { get; set; }
+
+    public string? ImageFrontUrl { get; set; }
+
+    public string? ImageBackOrSideUrl { get; set; }
+
+    public DateTime? CreatedAt { get; set; }
+
+    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+
+    public virtual Customer Customer { get; set; } = null!;
+}
