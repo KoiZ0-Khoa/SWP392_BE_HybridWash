@@ -77,7 +77,21 @@ GO
 
 
 -- =============================================
--- 5. BẢNG NHÂN VIÊN (STAFF) - [BẢNG MỚI]
+-- 5. BẢNG DỊCH VỤ (SERVICES) - [BẢNG MỚI]
+-- =============================================
+CREATE TABLE Services (
+    ServiceID INT IDENTITY(1,1) PRIMARY KEY,
+    ServiceName NVARCHAR(100) NOT NULL, -- Tên gói: Rửa tiêu chuẩn, Rửa VIP bọt tuyết...
+    Description NVARCHAR(500),          -- Mô tả gói dịch vụ
+    Price DECIMAL(18, 2) NOT NULL,      -- Giá tiền gốc của dịch vụ
+    IsActive BIT DEFAULT 1,             -- 1: Đang phục vụ, 0: Ngừng phục vụ
+    CreatedAt DATETIME DEFAULT GETDATE()
+);
+GO
+
+
+-- =============================================
+-- 6. BẢNG NHÂN VIÊN (STAFF)
 -- =============================================
 CREATE TABLE Staff (
     StaffID INT IDENTITY(1,1) PRIMARY KEY,
@@ -94,7 +108,7 @@ GO
 
 
 -- =============================================
--- 6. BẢNG KHUNG GIỜ (TIMESLOTS) - [BẢNG MỚI]
+-- 7. BẢNG KHUNG GIỜ (TIMESLOTS)
 -- =============================================
 CREATE TABLE TimeSlots (
     SlotID INT IDENTITY(1,1) PRIMARY KEY,
@@ -110,13 +124,14 @@ GO
 
 
 -- =============================================
--- 7. BẢNG BOOKING / LỊCH SỬ RỬA XE (ĐÃ CẬP NHẬT)
+-- 8. BẢNG BOOKING / LỊCH SỬ RỬA XE (ĐÃ CẬP NHẬT SERVICE VÀ PRICE)
 -- =============================================
 CREATE TABLE Bookings (
     BookingID INT IDENTITY(1,1) PRIMARY KEY,
 
     CustomerID INT NOT NULL,
     VehicleID INT NOT NULL,
+    ServiceID INT NOT NULL,  -- Gói dịch vụ khách chọn
     PromotionID INT NULL,
     
     SlotID INT NOT NULL,     -- Khóa ngoại nối vào khung giờ
@@ -125,10 +140,14 @@ CREATE TABLE Bookings (
     -- Thời gian khách đặt lịch (Chỉ lấy ngày)
     BookingDate DATE NOT NULL,
 
+    -- Lưu lại giá tiền để chốt sổ thu tiền (Không bị ảnh hưởng nếu sau này đổi giá dịch vụ)
+    OriginalPrice DECIMAL(18, 2) DEFAULT 0, 
+    FinalPrice DECIMAL(18, 2) DEFAULT 0,    
+
     -- Thời gian thực tế hoàn thành việc rửa
     ActualWashTime DATETIME NULL,
 
-    -- Thêm trạng thái CheckedIn và Washing cho đúng flow
+    -- Trạng thái flow
     Status VARCHAR(20) DEFAULT 'Pending'
         CHECK (Status IN ('Pending', 'CheckedIn', 'Washing', 'Completed', 'Cancelled', 'NoShow')),
 
@@ -136,9 +155,8 @@ CREATE TABLE Bookings (
 
     FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID),
     FOREIGN KEY (VehicleID) REFERENCES Vehicles(VehicleID),
+    FOREIGN KEY (ServiceID) REFERENCES Services(ServiceID), -- Khóa ngoại bảng Services
     FOREIGN KEY (PromotionID) REFERENCES Promotions(PromotionID),
-    
-    -- Ràng buộc 2 bảng mới
     FOREIGN KEY (SlotID) REFERENCES TimeSlots(SlotID),
     FOREIGN KEY (StaffID) REFERENCES Staff(StaffID)
 );
@@ -146,7 +164,7 @@ GO
 
 
 -- =============================================
--- 8. BẢNG SỔ CÁI ĐIỂM
+-- 9. BẢNG SỔ CÁI ĐIỂM
 -- =============================================
 CREATE TABLE PointLedger (
     TransactionID INT IDENTITY(1,1) PRIMARY KEY,
@@ -154,8 +172,7 @@ CREATE TABLE PointLedger (
     CustomerID INT NOT NULL,
     BookingID INT NULL,
 
-    -- Dương = cộng điểm
-    -- Âm = trừ điểm
+    -- Dương = cộng điểm, Âm = trừ điểm
     Points INT NOT NULL,
 
     TransactionType VARCHAR(20)

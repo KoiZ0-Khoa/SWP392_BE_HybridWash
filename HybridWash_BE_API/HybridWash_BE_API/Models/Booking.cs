@@ -11,9 +11,19 @@ public partial class Booking
 
     public int VehicleId { get; set; }
 
+    public int ServiceId { get; set; }
+
     public int? PromotionId { get; set; }
 
-    public DateTime BookingTime { get; set; }
+    public int SlotId { get; set; }
+
+    public int? StaffId { get; set; }
+
+    public DateOnly BookingDate { get; set; }
+
+    public decimal? OriginalPrice { get; set; }
+
+    public decimal? FinalPrice { get; set; }
 
     public DateTime? ActualWashTime { get; set; }
 
@@ -26,6 +36,12 @@ public partial class Booking
     public virtual ICollection<PointLedger> PointLedgers { get; set; } = new List<PointLedger>();
 
     public virtual Promotion? Promotion { get; set; }
+
+    public virtual Service Service { get; set; } = null!;
+
+    public virtual TimeSlot Slot { get; set; } = null!;
+
+    public virtual Staff? Staff { get; set; }
 
     public virtual Vehicle Vehicle { get; set; } = null!;
 }
