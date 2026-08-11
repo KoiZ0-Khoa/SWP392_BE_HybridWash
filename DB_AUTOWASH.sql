@@ -134,8 +134,15 @@ GO
 CREATE TABLE Bookings (
     BookingID INT IDENTITY(1,1) PRIMARY KEY,
 
-    CustomerID INT NOT NULL,
-    VehicleID INT NOT NULL,
+    CustomerID INT NULL,
+    VehicleID INT NULL,
+
+    -- Thông tin khách vãng lai (Nếu CustomerID / VehicleID là NULL)
+    GuestName NVARCHAR(100) NULL,
+    GuestPhone VARCHAR(15) NULL,
+    GuestLicensePlate VARCHAR(20) NULL,
+    GuestVehicleType VARCHAR(20) NULL,
+
     ServiceID INT NOT NULL,  -- Gói dịch vụ khách chọn
     PromotionID INT NULL,
     
@@ -152,9 +159,14 @@ CREATE TABLE Bookings (
     -- Thời gian thực tế hoàn thành việc rửa
     ActualWashTime DATETIME NULL,
 
+    -- Hình ảnh xe trước khi rửa & Ghi chú của Staff
+    IncidentImage1 NVARCHAR(500) NULL,
+    IncidentImage2 NVARCHAR(500) NULL,
+    StaffNote NVARCHAR(1000) NULL,
+
     -- Trạng thái flow
     Status VARCHAR(20) DEFAULT 'Pending'
-        CHECK (Status IN ('Pending', 'CheckedIn', 'Washing', 'Completed', 'Cancelled', 'NoShow')),
+        CHECK (Status IN ('Pending', 'Confirmed', 'CheckedIn', 'Washing', 'Completed', 'CheckedOut', 'Cancelled', 'NoShow')),
 
     CreatedAt DATETIME DEFAULT GETDATE(),
 
@@ -263,4 +275,23 @@ GO
 CREATE UNIQUE INDEX UX_PointLedger_RewardRedemptionID
 ON PointLedger(RewardRedemptionID)
 WHERE RewardRedemptionID IS NOT NULL;
+GO
+
+-- =============================================
+-- 12. BẢNG BIÊN BẢN BÀN GIAO XE
+-- =============================================
+CREATE TABLE ParkingReceipts (
+    ReceiptID INT IDENTITY(1,1) PRIMARY KEY,
+    BookingID INT NOT NULL UNIQUE,
+    IssueStaffID INT NOT NULL,
+    VerifyStaffID INT NULL,
+    Status VARCHAR(20) DEFAULT 'Issued',
+    IsCustomerLeaving BIT DEFAULT 0,
+    CustomerSignature NVARCHAR(MAX) NULL,
+    IssuedAt DATETIME DEFAULT GETDATE(),
+    VerifiedAt DATETIME NULL,
+    FOREIGN KEY (BookingID) REFERENCES Bookings(BookingID),
+    FOREIGN KEY (IssueStaffID) REFERENCES Staff(StaffID),
+    FOREIGN KEY (VerifyStaffID) REFERENCES Staff(StaffID)
+);
 GO
