@@ -27,6 +27,7 @@ namespace HybridWash_BE_API
             builder.Services.AddScoped<IAuthRepository, AuthRepository>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddSingleton<ITokenGenerator, JwtTokenGenerator>();
+            builder.Services.AddLoyaltyModule();
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -36,13 +37,12 @@ namespace HybridWash_BE_API
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "HybridWash API", Version = "v1" });
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
-                    Description = @"JWT Authorization header using the Bearer scheme. \r\n\r\n 
-                      Enter 'Bearer' [space] and then your token in the text input below.
-                      \r\n\r\nExample: 'Bearer 12345abcdef'",
+                    Description = "Enter the JWT token only. Swagger will add the Bearer prefix automatically.",
                     Name = "Authorization",
                     In = ParameterLocation.Header,
-                    Type = SecuritySchemeType.ApiKey,
-                    Scheme = "Bearer"
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT"
                 });
 
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement()
@@ -54,10 +54,7 @@ namespace HybridWash_BE_API
                             {
                                 Type = ReferenceType.SecurityScheme,
                                 Id = "Bearer"
-                            },
-                            Scheme = "oauth2",
-                            Name = "Bearer",
-                            In = ParameterLocation.Header,
+                            }
                         },
                         new List<string>()
                     }
