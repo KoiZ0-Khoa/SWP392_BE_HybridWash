@@ -1,4 +1,4 @@
-﻿
+
 using HybridWash.Entities.Models;
 using HybridWash.Repositories.Data;
 using HybridWash.Repositories.Interfaces;
@@ -30,9 +30,25 @@ public class AuthRepository : IAuthRepository
         return _context.Customers.AnyAsync(customer => customer.PhoneNumber == phoneNumber);
     }
 
+    public Task<bool> LicensePlateExistsAsync(string licensePlate)
+    {
+        return _context.Vehicles.AnyAsync(v => v.LicensePlate == licensePlate);
+    }
+
     public async Task AddCustomerAsync(Customer customer)
     {
-        _context.Customers.Add(customer);
+        await _context.Customers.AddAsync(customer);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<bool> StaffPhoneNumberExistsAsync(string phoneNumber)
+    {
+        return await _context.Staff.AnyAsync(s => s.PhoneNumber == phoneNumber);
+    }
+
+    public async Task AddStaffAsync(Staff staff)
+    {
+        await _context.Staff.AddAsync(staff);
         await _context.SaveChangesAsync();
     }
 }

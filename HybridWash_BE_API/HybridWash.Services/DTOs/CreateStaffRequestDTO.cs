@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HybridWash.Services.DTOs
 {
-    public class RegisterRequestDTO
+    public class CreateStaffRequestDTO
     {
         [Required(ErrorMessage = "Họ tên không được để trống.")]
         public string FullName { get; set; } = null!;
@@ -14,11 +14,7 @@ namespace HybridWash.Services.DTOs
         [Required(ErrorMessage = "Mật khẩu không được để trống.")]
         [RegularExpression(@"^(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).+$", ErrorMessage = "Mật khẩu bắt buộc phải có ít nhất 1 ký tự đặc biệt, 1 chữ in hoa và 1 chữ số.")]
         public string Password { get; set; } = null!;
-
-        [Required]
-        public string LicensePlate { get; set; } = null!;
         
-        [Required]
-        public string VehicleType { get; set; } = null!;
+        public string Role { get; set; } = "Staff";
     }
 }

@@ -41,6 +41,7 @@ CREATE TABLE Vehicles (
 
     LicensePlate VARCHAR(20) NOT NULL UNIQUE,
     VehicleType NVARCHAR(50),
+    QrCode VARCHAR(255) UNIQUE,
 
     -- URL hình ảnh xe trước khi rửa
     ImageFrontUrl NVARCHAR(500),
@@ -101,7 +102,7 @@ CREATE TABLE Staff (
     PasswordHash NVARCHAR(MAX) NOT NULL,
     
     Role VARCHAR(50) DEFAULT 'Washer'
-        CHECK (Role IN ('Washer', 'Manager', 'Admin')),
+        CHECK (Role IN ('Washer', 'Manager', 'Admin', 'Staff')),
 
     IsActive BIT DEFAULT 1, -- 1: Đang làm việc, 0: Đã nghỉ
     CreatedAt DATETIME DEFAULT GETDATE()
@@ -149,9 +150,20 @@ CREATE TABLE Bookings (
     -- Thời gian thực tế hoàn thành việc rửa
     ActualWashTime DATETIME NULL,
 
+    -- Thông tin khách vãng lai (Guest)
+    GuestName NVARCHAR(100) NULL,
+    GuestPhone VARCHAR(20) NULL,
+    GuestLicensePlate VARCHAR(50) NULL,
+    GuestVehicleType NVARCHAR(50) NULL,
+
+    -- Hình ảnh và ghi chú
+    IncidentImage1 NVARCHAR(500) NULL,
+    IncidentImage2 NVARCHAR(500) NULL,
+    StaffNote NVARCHAR(500) NULL,
+
     -- Trạng thái flow
     Status VARCHAR(20) DEFAULT 'Pending'
-        CHECK (Status IN ('Pending', 'CheckedIn', 'Washing', 'Completed', 'Cancelled', 'NoShow')),
+        CONSTRAINT CHK_Bookings_Status CHECK (Status IN ('Pending', 'Confirmed', 'CheckedIn', 'Washing', 'Completed', 'CheckedOut', 'Cancelled', 'NoShow')),
 
     CreatedAt DATETIME DEFAULT GETDATE(),
 
@@ -189,3 +201,29 @@ CREATE TABLE PointLedger (
     FOREIGN KEY (BookingID) REFERENCES Bookings(BookingID)
 );
 GO
+
+-- =============================================
+-- 10. BẢNG BIÊN BẢN GỬI XE (PARKING RECEIPTS)
+-- =============================================
+CREATE TABLE ParkingReceipts (
+    ReceiptID INT IDENTITY(1,1) PRIMARY KEY,
+    BookingID INT NOT NULL UNIQUE,
+
+    IssueStaffID INT NOT NULL,
+    VerifyStaffID INT NULL,
+
+    Status VARCHAR(20) DEFAULT 'Issued'
+        CHECK (Status IN ('Issued', 'Verified')),
+
+    IsCustomerLeaving BIT DEFAULT 0,
+    CustomerSignature NVARCHAR(MAX) NULL,
+
+    IssuedAt DATETIME DEFAULT GETDATE(),
+    VerifiedAt DATETIME NULL,
+
+    FOREIGN KEY (BookingID) REFERENCES Bookings(BookingID),
+    FOREIGN KEY (IssueStaffID) REFERENCES Staff(StaffID),
+    FOREIGN KEY (VerifyStaffID) REFERENCES Staff(StaffID)
+);
+GO
+

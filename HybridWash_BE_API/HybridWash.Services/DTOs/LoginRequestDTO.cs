@@ -4,6 +4,5 @@ namespace HybridWash.Services.DTOs
     {
         public string PhoneNumber { get; set; } = null!;
         public string Password { get; set; } = null!;
-        public bool IsStaff { get; set; } = false;
     }
 }

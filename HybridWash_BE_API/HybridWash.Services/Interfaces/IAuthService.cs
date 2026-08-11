@@ -1,4 +1,4 @@
-﻿
+
 using HybridWash.Services.DTOs;
 
 namespace HybridWash.Services.Interfaces
@@ -7,5 +7,6 @@ namespace HybridWash.Services.Interfaces
     {
         Task<AuthResponseDTO> LoginAsync(LoginRequestDTO request);
         Task<AuthResponseDTO> RegisterCustomerAsync(RegisterRequestDTO request);
+        Task<AuthResponseDTO> CreateStaffAsync(CreateStaffRequestDTO request);
     }
 }

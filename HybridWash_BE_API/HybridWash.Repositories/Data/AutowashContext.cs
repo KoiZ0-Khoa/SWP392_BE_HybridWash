@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using HybridWash.Entities.Models;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +17,8 @@ public partial class AutowashContext : DbContext
     public virtual DbSet<Customer> Customers { get; set; }
 
     public virtual DbSet<PointLedger> PointLedgers { get; set; }
+
+    public virtual DbSet<ParkingReceipt> ParkingReceipts { get; set; }
 
     public virtual DbSet<Promotion> Promotions { get; set; }
 
@@ -147,7 +149,41 @@ public partial class AutowashContext : DbContext
             entity.HasOne(d => d.Customer).WithMany(p => p.PointLedgers)
                 .HasForeignKey(d => d.CustomerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PointLedg__Custo__6B24EA82");
+                .HasConstraintName("FK__PointLedg__Custo__66603565");
+        });
+
+        modelBuilder.Entity<ParkingReceipt>(entity =>
+        {
+            entity.HasKey(e => e.ReceiptId).HasName("PK__ParkingR__CC08C400");
+
+            entity.HasIndex(e => e.BookingId, "UQ__ParkingR__BookingId").IsUnique();
+
+            entity.Property(e => e.ReceiptId).HasColumnName("ReceiptID");
+            entity.Property(e => e.BookingId).HasColumnName("BookingID");
+            entity.Property(e => e.IssueStaffId).HasColumnName("IssueStaffID");
+            entity.Property(e => e.VerifyStaffId).HasColumnName("VerifyStaffID");
+            entity.Property(e => e.IssuedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.VerifiedAt).HasColumnType("datetime");
+            entity.Property(e => e.Status)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasDefaultValue("Issued");
+
+            entity.HasOne(d => d.Booking).WithOne(p => p.ParkingReceipt)
+                .HasForeignKey<ParkingReceipt>(d => d.BookingId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__ParkingRe__Booki__01234567");
+
+            entity.HasOne(d => d.IssueStaff).WithMany()
+                .HasForeignKey(d => d.IssueStaffId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__ParkingRe__Issue__01234568");
+
+            entity.HasOne(d => d.VerifyStaff).WithMany()
+                .HasForeignKey(d => d.VerifyStaffId)
+                .HasConstraintName("FK__ParkingRe__Verif__01234569");
         });
 
         modelBuilder.Entity<Promotion>(entity =>
@@ -240,6 +276,9 @@ public partial class AutowashContext : DbContext
                 .HasMaxLength(20)
                 .IsUnicode(false);
             entity.Property(e => e.VehicleType).HasMaxLength(50);
+            entity.Property(e => e.QrCode)
+                .HasMaxLength(255)
+                .IsUnicode(false);
 
             entity.HasOne(d => d.Customer).WithMany(p => p.Vehicles)
                 .HasForeignKey(d => d.CustomerId)

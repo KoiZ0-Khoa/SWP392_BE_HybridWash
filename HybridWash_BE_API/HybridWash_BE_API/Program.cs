@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
@@ -28,13 +28,33 @@ namespace HybridWash_BE_API
 
             // Configure DbContext
             builder.Services.AddDbContext<AutowashContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("MyCnn")));
+                options.UseSqlServer(
+                    builder.Configuration.GetConnectionString("MyCnn"),
+                    sqlServerOptionsAction: sqlOptions =>
+                    {
+                        sqlOptions.EnableRetryOnFailure(
+                            maxRetryCount: 5,
+                            maxRetryDelay: TimeSpan.FromSeconds(30),
+                            errorNumbersToAdd: null);
+                    }));
 
             builder.Services.AddScoped<IAuthRepository, AuthRepository>();
             builder.Services.AddScoped<IAuthService, AuthService>();
 
+            builder.Services.AddScoped<HybridWash.Repositories.Interfaces.IStaffRepository, HybridWash.Repositories.Implementations.StaffRepository>();
+            builder.Services.AddScoped<HybridWash.Services.Interfaces.IStaffService, HybridWash.Services.Implementations.StaffService>();
+
+            builder.Services.AddScoped<HybridWash.Repositories.Interfaces.IBookingRepository, HybridWash.Repositories.Implementations.BookingRepository>();
+            builder.Services.AddScoped<HybridWash.Services.Interfaces.IBookingService, HybridWash.Services.Implementations.BookingService>();
+
+            builder.Services.AddScoped<HybridWash.Repositories.Interfaces.ICustomerRepository, HybridWash.Repositories.Implementations.CustomerRepository>();
+            builder.Services.AddScoped<HybridWash.Services.Interfaces.ICustomerService, HybridWash.Services.Implementations.CustomerService>();
+
             builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
             builder.Services.AddScoped<IServiceService, ServiceService>();
+
+            // Background Service for Washing Automation
+            builder.Services.AddHostedService<HybridWash.Services.BackgroundServices.WashStatusUpdaterService>();
 
             builder.Services.AddSingleton<ITokenGenerator, JwtTokenGenerator>();
             builder.Services.AddLoyaltyModule();

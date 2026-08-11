@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace HybridWash.Entities.Models;
@@ -58,4 +58,6 @@ public partial class Booking
     public virtual Staff? Staff { get; set; }
 
     public virtual Vehicle? Vehicle { get; set; }
+    
+    public virtual ParkingReceipt? ParkingReceipt { get; set; }
 }
