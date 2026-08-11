@@ -11,7 +11,9 @@ public partial class TimeSlot
 
     public TimeOnly EndTime { get; set; }
 
-    public int Capacity { get; set; }
+    public int CarCapacity { get; set; }
+
+    public int BikeCapacity { get; set; }
 
     public bool? IsActive { get; set; }
 

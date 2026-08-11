@@ -1,3 +1,4 @@
+﻿
 using HybridWash.Services.DTOs;
 
 namespace HybridWash.Services.Interfaces
