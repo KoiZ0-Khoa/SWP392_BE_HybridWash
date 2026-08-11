@@ -1,4 +1,4 @@
-namespace HybridWash_BE_API.DTOs
+namespace HybridWash.Services.DTOs
 {
     public class RegisterRequestDTO
     {

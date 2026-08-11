@@ -1,6 +1,6 @@
-using HybridWash_BE_API.DTOs;
+using HybridWash.Services.DTOs;
 
-namespace HybridWash_BE_API.Services
+namespace HybridWash.Services.Interfaces
 {
     public interface IAuthService
     {

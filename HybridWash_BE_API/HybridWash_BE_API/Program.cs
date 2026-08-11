@@ -2,7 +2,12 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
-using HybridWash_BE_API.Models;
+using HybridWash.Repositories.Data;
+using HybridWash.Repositories.Implementations;
+using HybridWash.Repositories.Interfaces;
+using HybridWash.Services.Implementations;
+using HybridWash.Services.Interfaces;
+using HybridWash_BE_API.Security;
 using Microsoft.EntityFrameworkCore;
 
 namespace HybridWash_BE_API
@@ -19,7 +24,9 @@ namespace HybridWash_BE_API
             builder.Services.AddDbContext<AutowashContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("MyCnn")));
 
-            builder.Services.AddScoped<HybridWash_BE_API.Services.IAuthService, HybridWash_BE_API.Services.AuthService>();
+            builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddSingleton<ITokenGenerator, JwtTokenGenerator>();
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

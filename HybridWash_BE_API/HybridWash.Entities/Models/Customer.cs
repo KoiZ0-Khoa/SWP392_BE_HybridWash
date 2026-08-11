@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace HybridWash_BE_API.Models;
+namespace HybridWash.Entities.Models;
 
 public partial class Customer
 {

@@ -1,5 +1,5 @@
-using HybridWash_BE_API.DTOs;
-using HybridWash_BE_API.Services;
+using HybridWash.Services.DTOs;
+using HybridWash.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HybridWash_BE_API.Controllers
