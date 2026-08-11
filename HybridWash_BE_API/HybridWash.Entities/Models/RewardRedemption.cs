@@ -1,8 +1,9 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
 
 namespace HybridWash.Entities.Models;
 
-public class RewardRedemption
+public partial class RewardRedemption
 {
     public int RedemptionId { get; set; }
 
@@ -14,7 +15,7 @@ public class RewardRedemption
 
     public int PointsSpent { get; set; }
 
-    public string Status { get; set; } = "Issued";
+    public string Status { get; set; } = null!;
 
     public DateTime RedeemedAt { get; set; }
 
@@ -22,11 +23,11 @@ public class RewardRedemption
 
     public int? BookingId { get; set; }
 
-    public virtual Customer Customer { get; set; } = null!;
-
-    public virtual Reward Reward { get; set; } = null!;
-
     public virtual Booking? Booking { get; set; }
 
-    public virtual PointLedger? PointTransaction { get; set; }
+    public virtual Customer Customer { get; set; } = null!;
+
+    public virtual PointLedger? PointLedger { get; set; }
+
+    public virtual Reward Reward { get; set; } = null!;
 }

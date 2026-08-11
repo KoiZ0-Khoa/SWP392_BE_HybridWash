@@ -38,7 +38,7 @@ public partial class AutowashContext : DbContext
     {
         modelBuilder.Entity<Booking>(entity =>
         {
-            entity.HasKey(e => e.BookingId).HasName("PK__Bookings__73951ACD10088F5C");
+            entity.HasKey(e => e.BookingId).HasName("PK__Bookings__73951ACD7262D128");
 
             entity.Property(e => e.BookingId).HasColumnName("BookingID");
             entity.Property(e => e.ActualWashTime).HasColumnType("datetime");
@@ -77,36 +77,36 @@ public partial class AutowashContext : DbContext
 
             entity.HasOne(d => d.Customer).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.CustomerId)
-                .HasConstraintName("FK__Bookings__Custom__60A75C0F");
+                .HasConstraintName("FK__Bookings__Custom__5DCAEF64");
 
             entity.HasOne(d => d.Promotion).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.PromotionId)
-                .HasConstraintName("FK__Bookings__Promot__6383C8BA");
+                .HasConstraintName("FK__Bookings__Promot__60A75C0F");
 
             entity.HasOne(d => d.Service).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.ServiceId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Bookings__Servic__628FA481");
+                .HasConstraintName("FK__Bookings__Servic__5FB337D6");
 
             entity.HasOne(d => d.Slot).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.SlotId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Bookings__SlotID__6477ECF3");
+                .HasConstraintName("FK__Bookings__SlotID__619B8048");
 
             entity.HasOne(d => d.Staff).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.StaffId)
-                .HasConstraintName("FK__Bookings__StaffI__656C112C");
+                .HasConstraintName("FK__Bookings__StaffI__628FA481");
 
             entity.HasOne(d => d.Vehicle).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.VehicleId)
-                .HasConstraintName("FK__Bookings__Vehicl__619B8048");
+                .HasConstraintName("FK__Bookings__Vehicl__5EBF139D");
         });
 
         modelBuilder.Entity<Customer>(entity =>
         {
-            entity.HasKey(e => e.CustomerId).HasName("PK__Customer__A4AE64B8D3A53BAE");
+            entity.HasKey(e => e.CustomerId).HasName("PK__Customer__A4AE64B80ED0B1AD");
 
-            entity.HasIndex(e => e.PhoneNumber, "UQ__Customer__85FB4E38B3548610").IsUnique();
+            entity.HasIndex(e => e.PhoneNumber, "UQ__Customer__85FB4E3872752CA2").IsUnique();
 
             entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
             entity.Property(e => e.CreatedAt)
@@ -118,9 +118,6 @@ public partial class AutowashContext : DbContext
                 .IsUnicode(false)
                 .HasDefaultValue("Member");
             entity.Property(e => e.FullName).HasMaxLength(100);
-            entity.Property(e => e.PasswordHash)
-                .HasMaxLength(255)
-                .IsUnicode(false);
             entity.Property(e => e.PhoneNumber)
                 .HasMaxLength(15)
                 .IsUnicode(false);
@@ -131,14 +128,13 @@ public partial class AutowashContext : DbContext
 
         modelBuilder.Entity<ParkingReceipt>(entity =>
         {
-            entity.HasKey(e => e.ReceiptId).HasName("PK__ParkingR__CC08C40049DB80A3");
+            entity.HasKey(e => e.ReceiptId).HasName("PK__ParkingR__CC08C4009D92C04D");
 
-            entity.HasIndex(e => e.BookingId, "UQ__ParkingR__73951ACEF79FFCEF").IsUnique();
+            entity.HasIndex(e => e.BookingId, "UQ__ParkingR__73951ACC51E1CEE8").IsUnique();
 
             entity.Property(e => e.ReceiptId).HasColumnName("ReceiptID");
             entity.Property(e => e.BookingId).HasColumnName("BookingID");
             entity.Property(e => e.IsCustomerLeaving).HasDefaultValue(false);
-            entity.Property(e => e.CustomerSignature).HasColumnType("nvarchar(max)");
             entity.Property(e => e.IssueStaffId).HasColumnName("IssueStaffID");
             entity.Property(e => e.IssuedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -147,33 +143,33 @@ public partial class AutowashContext : DbContext
                 .HasMaxLength(20)
                 .IsUnicode(false)
                 .HasDefaultValue("Issued");
-            entity.Property(e => e.VerifyStaffId).HasColumnName("VerifyStaffID");
             entity.Property(e => e.VerifiedAt).HasColumnType("datetime");
+            entity.Property(e => e.VerifyStaffId).HasColumnName("VerifyStaffID");
 
             entity.HasOne(d => d.Booking).WithOne(p => p.ParkingReceipt)
                 .HasForeignKey<ParkingReceipt>(d => d.BookingId)
-                .HasConstraintName("FK__ParkingRe__Booki__72C60C4A");
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__ParkingRe__Booki__04E4BC85");
 
             entity.HasOne(d => d.IssueStaff).WithMany(p => p.ParkingReceiptIssueStaffs)
                 .HasForeignKey(d => d.IssueStaffId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ParkingRe__Issue__73BA3083");
+                .HasConstraintName("FK__ParkingRe__Issue__05D8E0BE");
 
             entity.HasOne(d => d.VerifyStaff).WithMany(p => p.ParkingReceiptVerifyStaffs)
                 .HasForeignKey(d => d.VerifyStaffId)
-                .HasConstraintName("FK__ParkingRe__Verif__74AE54BC");
+                .HasConstraintName("FK__ParkingRe__Verif__06CD04F7");
         });
 
         modelBuilder.Entity<PointLedger>(entity =>
         {
-            entity.HasKey(e => e.TransactionId).HasName("PK__PointLed__55433A4B3195A8D1");
-
-            entity.HasIndex(e => e.RewardRedemptionId)
-                .IsUnique()
-                .HasDatabaseName("UX_PointLedger_RewardRedemptionID")
-                .HasFilter("[RewardRedemptionID] IS NOT NULL");
+            entity.HasKey(e => e.TransactionId).HasName("PK__PointLed__55433A4B69BABF45");
 
             entity.ToTable("PointLedger");
+
+            entity.HasIndex(e => e.RewardRedemptionId, "UX_PointLedger_RewardRedemptionID")
+                .IsUnique()
+                .HasFilter("([RewardRedemptionID] IS NOT NULL)");
 
             entity.Property(e => e.TransactionId).HasColumnName("TransactionID");
             entity.Property(e => e.BookingId).HasColumnName("BookingID");
@@ -190,23 +186,23 @@ public partial class AutowashContext : DbContext
 
             entity.HasOne(d => d.Booking).WithMany(p => p.PointLedgers)
                 .HasForeignKey(d => d.BookingId)
-                .HasConstraintName("FK__PointLedg__Booki__6C190EBB");
+                .HasConstraintName("FK__PointLedg__Booki__68487DD7");
 
             entity.HasOne(d => d.Customer).WithMany(p => p.PointLedgers)
                 .HasForeignKey(d => d.CustomerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PointLedg__Custo__6B24EA82");
+                .HasConstraintName("FK__PointLedg__Custo__6754599E");
 
-            entity.HasOne(d => d.RewardRedemption).WithOne(p => p.PointTransaction)
+            entity.HasOne(d => d.RewardRedemption).WithOne(p => p.PointLedger)
                 .HasForeignKey<PointLedger>(d => d.RewardRedemptionId)
                 .HasConstraintName("FK_PointLedger_RewardRedemptions");
         });
 
         modelBuilder.Entity<Promotion>(entity =>
         {
-            entity.HasKey(e => e.PromotionId).HasName("PK__Promotio__52C42F2F36596DAD");
+            entity.HasKey(e => e.PromotionId).HasName("PK__Promotio__52C42F2F7D471371");
 
-            entity.HasIndex(e => e.PromoCode, "UQ__Promotio__32DBED3595140775").IsUnique();
+            entity.HasIndex(e => e.PromoCode, "UQ__Promotio__32DBED350150C25C").IsUnique();
 
             entity.Property(e => e.PromotionId).HasColumnName("PromotionID");
             entity.Property(e => e.CreatedAt)
@@ -230,11 +226,9 @@ public partial class AutowashContext : DbContext
 
         modelBuilder.Entity<Reward>(entity =>
         {
-            entity.HasKey(e => e.RewardId);
+            entity.HasIndex(e => e.ServiceId, "IX_Rewards_ServiceID");
 
-            entity.HasIndex(e => e.RewardName)
-                .IsUnique()
-                .HasDatabaseName("UQ_Rewards_RewardName");
+            entity.HasIndex(e => e.RewardName, "UQ_Rewards_RewardName").IsUnique();
 
             entity.Property(e => e.RewardId).HasColumnName("RewardID");
             entity.Property(e => e.CreatedAt)
@@ -255,7 +249,7 @@ public partial class AutowashContext : DbContext
             entity.Property(e => e.ValidFrom).HasColumnType("datetime");
             entity.Property(e => e.ValidTo).HasColumnType("datetime");
 
-            entity.HasOne(d => d.Service).WithMany()
+            entity.HasOne(d => d.Service).WithMany(p => p.Rewards)
                 .HasForeignKey(d => d.ServiceId)
                 .HasConstraintName("FK_Rewards_Services");
         });
@@ -264,14 +258,20 @@ public partial class AutowashContext : DbContext
         {
             entity.HasKey(e => e.RedemptionId);
 
-            entity.HasIndex(e => e.RequestId)
-                .IsUnique()
-                .HasDatabaseName("UQ_RewardRedemptions_RequestId");
+            entity.HasIndex(e => e.BookingId, "IX_RewardRedemptions_BookingID");
+
+            entity.HasIndex(e => e.CustomerId, "IX_RewardRedemptions_CustomerID");
+
+            entity.HasIndex(e => e.RewardId, "IX_RewardRedemptions_RewardID");
+
+            entity.HasIndex(e => e.RequestId, "UQ_RewardRedemptions_RequestId").IsUnique();
 
             entity.Property(e => e.RedemptionId).HasColumnName("RedemptionID");
             entity.Property(e => e.BookingId).HasColumnName("BookingID");
             entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
-            entity.Property(e => e.RedeemedAt).HasColumnType("datetime");
+            entity.Property(e => e.RedeemedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
             entity.Property(e => e.RewardId).HasColumnName("RewardID");
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
@@ -279,7 +279,7 @@ public partial class AutowashContext : DbContext
                 .HasDefaultValue("Issued");
             entity.Property(e => e.UsedAt).HasColumnType("datetime");
 
-            entity.HasOne(d => d.Booking).WithMany()
+            entity.HasOne(d => d.Booking).WithMany(p => p.RewardRedemptions)
                 .HasForeignKey(d => d.BookingId)
                 .HasConstraintName("FK_RewardRedemptions_Bookings");
 
@@ -288,7 +288,7 @@ public partial class AutowashContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_RewardRedemptions_Customers");
 
-            entity.HasOne(d => d.Reward).WithMany(p => p.Redemptions)
+            entity.HasOne(d => d.Reward).WithMany(p => p.RewardRedemptions)
                 .HasForeignKey(d => d.RewardId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_RewardRedemptions_Rewards");
@@ -296,7 +296,7 @@ public partial class AutowashContext : DbContext
 
         modelBuilder.Entity<Service>(entity =>
         {
-            entity.HasKey(e => e.ServiceId).HasName("PK__Services__C51BB0EAB7B79E7F");
+            entity.HasKey(e => e.ServiceId).HasName("PK__Services__C51BB0EA6F4EB55B");
 
             entity.Property(e => e.ServiceId).HasColumnName("ServiceID");
             entity.Property(e => e.CreatedAt)
@@ -310,9 +310,9 @@ public partial class AutowashContext : DbContext
 
         modelBuilder.Entity<Staff>(entity =>
         {
-            entity.HasKey(e => e.StaffId).HasName("PK__Staff__96D4AAF7BC695691");
+            entity.HasKey(e => e.StaffId).HasName("PK__Staff__96D4AAF775894E90");
 
-            entity.HasIndex(e => e.PhoneNumber, "UQ__Staff__85FB4E3850FF2E93").IsUnique();
+            entity.HasIndex(e => e.PhoneNumber, "UQ__Staff__85FB4E385B409A45").IsUnique();
 
             entity.Property(e => e.StaffId).HasColumnName("StaffID");
             entity.Property(e => e.CreatedAt)
@@ -320,36 +320,34 @@ public partial class AutowashContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.FullName).HasMaxLength(100);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
-            entity.Property(e => e.PasswordHash)
-                .HasMaxLength(255)
-                .IsUnicode(false);
             entity.Property(e => e.PhoneNumber)
                 .HasMaxLength(15)
                 .IsUnicode(false);
             entity.Property(e => e.Role)
                 .HasMaxLength(50)
                 .IsUnicode(false)
-                .HasDefaultValue("Washer");
+                .HasDefaultValue("Staff");
         });
 
         modelBuilder.Entity<TimeSlot>(entity =>
         {
-            entity.HasKey(e => e.SlotId).HasName("PK__TimeSlot__0A124A4FD93E363B");
+            entity.HasKey(e => e.SlotId).HasName("PK__TimeSlot__0A124A4FD1897255");
 
             entity.Property(e => e.SlotId).HasColumnName("SlotID");
-            entity.Property(e => e.BikeCapacity).HasDefaultValue(5);
-            entity.Property(e => e.CarCapacity).HasDefaultValue(2);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
+            
+            entity.Property(e => e.CarCapacity).HasDefaultValue(2);
+            entity.Property(e => e.BikeCapacity).HasDefaultValue(5);
         });
 
         modelBuilder.Entity<Vehicle>(entity =>
         {
-            entity.HasKey(e => e.VehicleId).HasName("PK__Vehicles__476B54B21101B620");
+            entity.HasKey(e => e.VehicleId).HasName("PK__Vehicles__476B54B2CEE7BEC8");
 
-            entity.HasIndex(e => e.LicensePlate, "UQ__Vehicles__026BC15CABA5DDE3").IsUnique();
+            entity.HasIndex(e => e.LicensePlate, "UQ__Vehicles__026BC15C3EEB94D8").IsUnique();
 
             entity.Property(e => e.VehicleId).HasColumnName("VehicleID");
             entity.Property(e => e.CreatedAt)
@@ -364,7 +362,7 @@ public partial class AutowashContext : DbContext
             entity.HasOne(d => d.Customer).WithMany(p => p.Vehicles)
                 .HasForeignKey(d => d.CustomerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Vehicles__Custom__4222D4EF");
+                .HasConstraintName("FK__Vehicles__Custom__412EB0B6");
         });
 
         OnModelCreatingPartial(modelBuilder);

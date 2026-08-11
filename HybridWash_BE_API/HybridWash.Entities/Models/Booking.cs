@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace HybridWash.Entities.Models;
@@ -17,7 +17,7 @@ public partial class Booking
 
     public string? GuestLicensePlate { get; set; }
 
-    public string GuestVehicleType { get; set; } = null!;
+    public string? GuestVehicleType { get; set; }
 
     public int ServiceId { get; set; }
 
@@ -35,11 +35,11 @@ public partial class Booking
 
     public DateTime? ActualWashTime { get; set; }
 
-    public string? StaffNote { get; set; }
-
     public string? IncidentImage1 { get; set; }
 
     public string? IncidentImage2 { get; set; }
+
+    public string? StaffNote { get; set; }
 
     public string? Status { get; set; }
 
@@ -47,9 +47,13 @@ public partial class Booking
 
     public virtual Customer? Customer { get; set; }
 
+    public virtual ParkingReceipt? ParkingReceipt { get; set; }
+
     public virtual ICollection<PointLedger> PointLedgers { get; set; } = new List<PointLedger>();
 
     public virtual Promotion? Promotion { get; set; }
+
+    public virtual ICollection<RewardRedemption> RewardRedemptions { get; set; } = new List<RewardRedemption>();
 
     public virtual Service Service { get; set; } = null!;
 
@@ -58,6 +62,4 @@ public partial class Booking
     public virtual Staff? Staff { get; set; }
 
     public virtual Vehicle? Vehicle { get; set; }
-    
-    public virtual ParkingReceipt? ParkingReceipt { get; set; }
 }

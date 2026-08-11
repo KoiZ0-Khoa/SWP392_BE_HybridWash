@@ -44,14 +44,19 @@ namespace HybridWash_BE_API
             builder.Services.AddScoped<HybridWash.Repositories.Interfaces.IStaffRepository, HybridWash.Repositories.Implementations.StaffRepository>();
             builder.Services.AddScoped<HybridWash.Services.Interfaces.IStaffService, HybridWash.Services.Implementations.StaffService>();
 
-            builder.Services.AddScoped<HybridWash.Repositories.Interfaces.IBookingRepository, HybridWash.Repositories.Implementations.BookingRepository>();
-            builder.Services.AddScoped<HybridWash.Services.Interfaces.IBookingService, HybridWash.Services.Implementations.BookingService>();
-
             builder.Services.AddScoped<HybridWash.Repositories.Interfaces.ICustomerRepository, HybridWash.Repositories.Implementations.CustomerRepository>();
             builder.Services.AddScoped<HybridWash.Services.Interfaces.ICustomerService, HybridWash.Services.Implementations.CustomerService>();
 
+            // api booking
             builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
             builder.Services.AddScoped<IServiceService, ServiceService>();
+
+            builder.Services.AddScoped<ITimeSlotRepository, TimeSlotRepository>();
+            builder.Services.AddScoped<ITimeSlotService, TimeSlotService>();
+
+            builder.Services.AddScoped<IBookingRepository, BookingRepository>();
+            builder.Services.AddScoped<IBookingService, BookingService>();
+
 
             // Background Service for Washing Automation
             builder.Services.AddHostedService<HybridWash.Services.BackgroundServices.WashStatusUpdaterService>();

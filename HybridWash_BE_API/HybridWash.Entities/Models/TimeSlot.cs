@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace HybridWash.Entities.Models;
@@ -11,9 +11,9 @@ public partial class TimeSlot
 
     public TimeOnly EndTime { get; set; }
 
-    public int CarCapacity { get; set; }
+    public int CarCapacity { get; set; } = 2;
 
-    public int BikeCapacity { get; set; }
+    public int BikeCapacity { get; set; } = 5;
 
     public bool? IsActive { get; set; }
 

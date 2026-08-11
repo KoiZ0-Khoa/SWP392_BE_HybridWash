@@ -41,12 +41,6 @@ CREATE TABLE Vehicles (
 
     LicensePlate VARCHAR(20) NOT NULL UNIQUE,
     VehicleType NVARCHAR(50),
-    QrCode NVARCHAR(MAX),
-
-    -- URL hình ảnh xe trước khi rửa
-    ImageFrontUrl NVARCHAR(500),
-    ImageBackOrSideUrl NVARCHAR(500),
-
     CreatedAt DATETIME DEFAULT GETDATE(),
 
     FOREIGN KEY (CustomerID)
@@ -121,7 +115,8 @@ CREATE TABLE TimeSlots (
     
     StartTime TIME NOT NULL, -- Giờ bắt đầu (VD: 08:00)
     EndTime TIME NOT NULL,   -- Giờ kết thúc (VD: 10:00)
-    Capacity INT NOT NULL,   -- Sức chứa (VD: nhận tối đa 5 xe)
+    CarCapacity INT NOT NULL DEFAULT 2,  
+    BikeCapacity INT NOT NULL DEFAULT 5,
     
     IsActive BIT DEFAULT 1,  -- Bật/tắt khung giờ
     CreatedAt DATETIME DEFAULT GETDATE()
