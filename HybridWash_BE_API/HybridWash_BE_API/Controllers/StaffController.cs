@@ -79,7 +79,22 @@ namespace HybridWash_BE_API.Controllers
             }
         }
 
-
+        [HttpGet("scan-qr/{qrCode}")]
+        public async Task<IActionResult> ScanQrCode(string qrCode)
+        {
+            try
+            {
+                var result = await _staffService.GetBookingByQrCodeAsync(qrCode);
+                if (result == null)
+                    return NotFound(new { Message = "Không tìm thấy lịch đặt xe đang hoạt động với mã QR này." });
+                
+                return Ok(new { Success = true, Data = result });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
 
         [HttpPost("issue-receipt")]
         public async Task<IActionResult> IssueReceipt([FromBody] IssueReceiptRequestDTO request)
