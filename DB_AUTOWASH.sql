@@ -41,6 +41,7 @@ CREATE TABLE Vehicles (
 
     LicensePlate VARCHAR(20) NOT NULL UNIQUE,
     VehicleType NVARCHAR(50),
+    QrCode NVARCHAR(MAX),
 
     -- URL hình ảnh xe trước khi rửa
     ImageFrontUrl NVARCHAR(500),
@@ -103,8 +104,8 @@ CREATE TABLE Staff (
     PhoneNumber VARCHAR(15) UNIQUE NOT NULL,
     PasswordHash NVARCHAR(MAX) NOT NULL,
     
-    Role VARCHAR(50) DEFAULT 'Washer'
-        CHECK (Role IN ('Washer', 'Manager', 'Admin')),
+    Role VARCHAR(50) DEFAULT 'Staff'
+        CHECK (Role IN ('Staff', 'Manager', 'Admin')),
 
     IsActive BIT DEFAULT 1, -- 1: Đang làm việc, 0: Đã nghỉ
     CreatedAt DATETIME DEFAULT GETDATE()

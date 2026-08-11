@@ -13,6 +13,7 @@ namespace HybridWash.Services.DTOs
 
         [Required(ErrorMessage = "Mật khẩu không được để trống.")]
         [RegularExpression(@"^(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).+$", ErrorMessage = "Mật khẩu bắt buộc phải có ít nhất 1 ký tự đặc biệt, 1 chữ in hoa và 1 chữ số.")]
+        [System.ComponentModel.DefaultValue("Password@123")]
         public string Password { get; set; } = null!;
 
         [Required]

@@ -8,9 +8,9 @@ namespace HybridWash.Services.Interfaces
         Task<DailyHistoryResponseDTO> GetDailyHistoryAsync(DateOnly date);
         Task<BookingResponseDTO?> GetBookingByQrCodeAsync(string qrCode);
         Task<bool> ConfirmBookingAsync(BookingIdRequestDTO request);
-        Task<bool> CheckInAsync(BookingIdRequestDTO request);
+        Task<string> CheckInAsync(QrCodeActionRequestDTO request);
         Task<bool> IssueReceiptAsync(IssueReceiptRequestDTO request, int staffId);
         Task<bool> VerifyReceiptAsync(VerifyReceiptRequestDTO request, int staffId);
-        Task<bool> CheckOutAsync(BookingIdRequestDTO request, int staffId);
+        Task<string> CheckOutAsync(QrCodeActionRequestDTO request, int staffId);
     }
 }

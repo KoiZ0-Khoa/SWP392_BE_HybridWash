@@ -66,12 +66,12 @@ namespace HybridWash_BE_API.Controllers
         }
 
         [HttpPost("check-in")]
-        public async Task<IActionResult> CheckIn([FromBody] BookingIdRequestDTO request)
+        public async Task<IActionResult> CheckIn([FromBody] QrCodeActionRequestDTO request)
         {
             try
             {
                 var result = await _staffService.CheckInAsync(request);
-                return Ok(new { Success = result, Message = "Check-in thành công." });
+                return Ok(new { Success = true, Message = result });
             }
             catch (Exception ex)
             {
@@ -137,7 +137,7 @@ namespace HybridWash_BE_API.Controllers
         }
 
         [HttpPost("check-out")]
-        public async Task<IActionResult> CheckOut([FromBody] BookingIdRequestDTO request)
+        public async Task<IActionResult> CheckOut([FromBody] QrCodeActionRequestDTO request)
         {
             try
             {
@@ -148,7 +148,7 @@ namespace HybridWash_BE_API.Controllers
                 }
 
                 var result = await _staffService.CheckOutAsync(request, staffId);
-                return Ok(new { Success = result, Message = "Giao xe thành công. Đơn hàng đã hoàn tất (Completed)." });
+                return Ok(new { Success = true, Message = result });
             }
             catch (Exception ex)
             {

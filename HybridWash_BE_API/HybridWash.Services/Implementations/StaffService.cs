@@ -98,12 +98,19 @@ namespace HybridWash.Services.Implementations
             return true;
         }
 
-        public async Task<bool> CheckInAsync(BookingIdRequestDTO request)
+        public async Task<string> CheckInAsync(QrCodeActionRequestDTO request)
         {
-            var booking = await _staffRepository.GetBookingByIdAsync(request.BookingId);
-            if (booking == null || (booking.Status != "Pending" && booking.Status != "Confirmed"))
+            var booking = await _staffRepository.GetActiveBookingByQrCodeAsync(request.QrCode);
+            if (booking == null)
             {
-                throw new Exception("Không tìm thấy Booking ở trạng thái chờ để Check-in.");
+                throw new Exception("Không tìm thấy Booking đang hoạt động với mã QR này.");
+            }
+
+            var licensePlate = booking.Vehicle?.LicensePlate ?? booking.GuestLicensePlate ?? "Không xác định";
+
+            if (booking.Status != "Pending" && booking.Status != "Confirmed")
+            {
+                throw new Exception($"Booking của xe {licensePlate} đang ở trạng thái {booking.Status}, không thể Check-in.");
             }
 
             booking.Status = "Washing";
@@ -111,7 +118,7 @@ namespace HybridWash.Services.Implementations
             await _staffRepository.UpdateBookingAsync(booking);
             await _staffRepository.SaveChangesAsync();
 
-            return true;
+            return $"Check-in thành công. Hệ thống đã ghi nhận xe biển số {licensePlate} vào bãi và bắt đầu rửa.";
         }
 
         public async Task<bool> IssueReceiptAsync(IssueReceiptRequestDTO request, int staffId)
@@ -171,18 +178,25 @@ namespace HybridWash.Services.Implementations
             return true;
         }
 
-        public async Task<bool> CheckOutAsync(BookingIdRequestDTO request, int staffId)
+        public async Task<string> CheckOutAsync(QrCodeActionRequestDTO request, int staffId)
         {
-            var booking = await _staffRepository.GetBookingByIdAsync(request.BookingId);
+            var booking = await _staffRepository.GetActiveBookingByQrCodeAsync(request.QrCode);
             if (booking == null)
             {
-                throw new Exception("Không tìm thấy thông tin đặt lịch.");
+                throw new Exception("Không tìm thấy thông tin đặt lịch đang hoạt động với mã QR này.");
             }
 
-            var receipt = await _staffRepository.GetParkingReceiptByBookingIdAsync(request.BookingId);
+            var licensePlate = booking.Vehicle?.LicensePlate ?? booking.GuestLicensePlate ?? "Không xác định";
+
+            if (booking.Status == "Pending" || booking.Status == "Confirmed")
+            {
+                throw new Exception($"Lỗi: Xe mang biển số {licensePlate} chưa check-in! Bạn không thể check-out xe chưa check-in.");
+            }
+
+            var receipt = await _staffRepository.GetParkingReceiptByBookingIdAsync(booking.BookingId);
             if (receipt != null && receipt.Status != "Verified")
             {
-                throw new Exception("Biên bản gửi xe chưa được xác nhận (Verify). Vui lòng xác nhận trước khi giao xe (Check-out).");
+                throw new Exception($"Biên bản gửi xe chưa được xác nhận (Verify). Vui lòng xác nhận trước khi giao xe (Check-out) cho biển số {licensePlate}.");
             }
 
             booking.Status = "CheckedOut";
@@ -190,7 +204,7 @@ namespace HybridWash.Services.Implementations
             await _staffRepository.UpdateBookingAsync(booking);
             await _staffRepository.SaveChangesAsync();
 
-            return true;
+            return $"Check-out thành công cho xe có biển số {licensePlate}. Đơn hàng đã hoàn tất.";
         }
     }
 }
