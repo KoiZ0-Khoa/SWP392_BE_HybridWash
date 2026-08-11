@@ -20,6 +20,10 @@ public partial class AutowashContext : DbContext
 
     public virtual DbSet<Promotion> Promotions { get; set; }
 
+    public virtual DbSet<Reward> Rewards { get; set; }
+
+    public virtual DbSet<RewardRedemption> RewardRedemptions { get; set; }
+
     public virtual DbSet<Service> Services { get; set; }
 
     public virtual DbSet<Staff> Staff { get; set; }
@@ -127,6 +131,11 @@ public partial class AutowashContext : DbContext
         {
             entity.HasKey(e => e.TransactionId).HasName("PK__PointLed__55433A4B3195A8D1");
 
+            entity.HasIndex(e => e.RewardRedemptionId)
+                .IsUnique()
+                .HasDatabaseName("UX_PointLedger_RewardRedemptionID")
+                .HasFilter("[RewardRedemptionID] IS NOT NULL");
+
             entity.ToTable("PointLedger");
 
             entity.Property(e => e.TransactionId).HasColumnName("TransactionID");
@@ -135,7 +144,9 @@ public partial class AutowashContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
+            entity.Property(e => e.Description).HasMaxLength(500);
             entity.Property(e => e.ExpireDate).HasColumnType("datetime");
+            entity.Property(e => e.RewardRedemptionId).HasColumnName("RewardRedemptionID");
             entity.Property(e => e.TransactionType)
                 .HasMaxLength(20)
                 .IsUnicode(false);
@@ -148,6 +159,10 @@ public partial class AutowashContext : DbContext
                 .HasForeignKey(d => d.CustomerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__PointLedg__Custo__6B24EA82");
+
+            entity.HasOne(d => d.RewardRedemption).WithOne(p => p.PointTransaction)
+                .HasForeignKey<PointLedger>(d => d.RewardRedemptionId)
+                .HasConstraintName("FK_PointLedger_RewardRedemptions");
         });
 
         modelBuilder.Entity<Promotion>(entity =>
@@ -160,6 +175,8 @@ public partial class AutowashContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.PromoCode)
                 .HasMaxLength(50)
                 .IsUnicode(false);
@@ -172,6 +189,72 @@ public partial class AutowashContext : DbContext
                 .IsUnicode(false);
             entity.Property(e => e.ValidFrom).HasColumnType("datetime");
             entity.Property(e => e.ValidTo).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<Reward>(entity =>
+        {
+            entity.HasKey(e => e.RewardId);
+
+            entity.HasIndex(e => e.RewardName)
+                .IsUnique()
+                .HasDatabaseName("UQ_Rewards_RewardName");
+
+            entity.Property(e => e.RewardId).HasColumnName("RewardID");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.DiscountValue).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.MinimumTier)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasDefaultValue("Member");
+            entity.Property(e => e.RewardName).HasMaxLength(100);
+            entity.Property(e => e.RewardType)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.ServiceId).HasColumnName("ServiceID");
+            entity.Property(e => e.ValidFrom).HasColumnType("datetime");
+            entity.Property(e => e.ValidTo).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Service).WithMany()
+                .HasForeignKey(d => d.ServiceId)
+                .HasConstraintName("FK_Rewards_Services");
+        });
+
+        modelBuilder.Entity<RewardRedemption>(entity =>
+        {
+            entity.HasKey(e => e.RedemptionId);
+
+            entity.HasIndex(e => e.RequestId)
+                .IsUnique()
+                .HasDatabaseName("UQ_RewardRedemptions_RequestId");
+
+            entity.Property(e => e.RedemptionId).HasColumnName("RedemptionID");
+            entity.Property(e => e.BookingId).HasColumnName("BookingID");
+            entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
+            entity.Property(e => e.RedeemedAt).HasColumnType("datetime");
+            entity.Property(e => e.RewardId).HasColumnName("RewardID");
+            entity.Property(e => e.Status)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasDefaultValue("Issued");
+            entity.Property(e => e.UsedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Booking).WithMany()
+                .HasForeignKey(d => d.BookingId)
+                .HasConstraintName("FK_RewardRedemptions_Bookings");
+
+            entity.HasOne(d => d.Customer).WithMany(p => p.RewardRedemptions)
+                .HasForeignKey(d => d.CustomerId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_RewardRedemptions_Customers");
+
+            entity.HasOne(d => d.Reward).WithMany(p => p.Redemptions)
+                .HasForeignKey(d => d.RewardId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_RewardRedemptions_Rewards");
         });
 
         modelBuilder.Entity<Service>(entity =>

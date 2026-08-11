@@ -90,6 +90,13 @@ namespace HybridWash_BE_API
 
             var app = builder.Build();
 
+            // Apply pending EF Core migrations without recreating the existing database.
+            using (var scope = app.Services.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<AutowashContext>();
+                context.Database.Migrate();
+            }
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {

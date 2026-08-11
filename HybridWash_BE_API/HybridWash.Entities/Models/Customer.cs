@@ -25,5 +25,7 @@ public partial class Customer
 
     public virtual ICollection<PointLedger> PointLedgers { get; set; } = new List<PointLedger>();
 
+    public virtual ICollection<RewardRedemption> RewardRedemptions { get; set; } = new List<RewardRedemption>();
+
     public virtual ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
 }
