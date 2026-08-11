@@ -23,6 +23,11 @@ public class PromotionService : IPromotionService
         return (await _promotionRepository.GetAllAsync()).Select(Map).ToList();
     }
 
+    public async Task<IReadOnlyList<PromotionDTO>> GetPublicAsync()
+    {
+        return (await _promotionRepository.GetActiveAsync(DateTime.UtcNow)).Select(Map).ToList();
+    }
+
     public async Task<PromotionDTO?> GetByIdAsync(int promotionId)
     {
         var promotion = await _promotionRepository.GetByIdAsync(promotionId);
