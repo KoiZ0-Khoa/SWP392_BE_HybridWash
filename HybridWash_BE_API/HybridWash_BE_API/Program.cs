@@ -86,9 +86,8 @@ namespace HybridWash_BE_API
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
-            app.UseHttpsRedirection();
-
+            // Disable HTTPS redirection for local mobile development
+            // app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();
 
