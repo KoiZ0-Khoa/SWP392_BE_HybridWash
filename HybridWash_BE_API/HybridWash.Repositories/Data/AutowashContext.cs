@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using HybridWash.Entities.Models;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +15,8 @@ public partial class AutowashContext : DbContext
     public virtual DbSet<Booking> Bookings { get; set; }
 
     public virtual DbSet<Customer> Customers { get; set; }
+
+    public virtual DbSet<ParkingReceipt> ParkingReceipts { get; set; }
 
     public virtual DbSet<PointLedger> PointLedgers { get; set; }
 
@@ -125,6 +127,41 @@ public partial class AutowashContext : DbContext
             entity.Property(e => e.TotalSpent)
                 .HasDefaultValue(0m)
                 .HasColumnType("decimal(18, 2)");
+        });
+
+        modelBuilder.Entity<ParkingReceipt>(entity =>
+        {
+            entity.HasKey(e => e.ReceiptId).HasName("PK__ParkingR__CC08C40049DB80A3");
+
+            entity.HasIndex(e => e.BookingId, "UQ__ParkingR__73951ACEF79FFCEF").IsUnique();
+
+            entity.Property(e => e.ReceiptId).HasColumnName("ReceiptID");
+            entity.Property(e => e.BookingId).HasColumnName("BookingID");
+            entity.Property(e => e.IsCustomerLeaving).HasDefaultValue(false);
+            entity.Property(e => e.CustomerSignature).HasColumnType("nvarchar(max)");
+            entity.Property(e => e.IssueStaffId).HasColumnName("IssueStaffID");
+            entity.Property(e => e.IssuedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Status)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasDefaultValue("Issued");
+            entity.Property(e => e.VerifyStaffId).HasColumnName("VerifyStaffID");
+            entity.Property(e => e.VerifiedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Booking).WithOne(p => p.ParkingReceipt)
+                .HasForeignKey<ParkingReceipt>(d => d.BookingId)
+                .HasConstraintName("FK__ParkingRe__Booki__72C60C4A");
+
+            entity.HasOne(d => d.IssueStaff).WithMany(p => p.ParkingReceiptIssueStaffs)
+                .HasForeignKey(d => d.IssueStaffId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__ParkingRe__Issue__73BA3083");
+
+            entity.HasOne(d => d.VerifyStaff).WithMany(p => p.ParkingReceiptVerifyStaffs)
+                .HasForeignKey(d => d.VerifyStaffId)
+                .HasConstraintName("FK__ParkingRe__Verif__74AE54BC");
         });
 
         modelBuilder.Entity<PointLedger>(entity =>

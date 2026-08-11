@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace HybridWash.Entities.Models;
@@ -20,4 +20,8 @@ public partial class Staff
     public string? PasswordHash { get; set; }
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+
+    public virtual ICollection<ParkingReceipt> ParkingReceiptIssueStaffs { get; set; } = new List<ParkingReceipt>();
+
+    public virtual ICollection<ParkingReceipt> ParkingReceiptVerifyStaffs { get; set; } = new List<ParkingReceipt>();
 }
