@@ -1,7 +1,8 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+// TODO: UNCOMMENT cÃ¡c using sau khi cháº¡y lá»‡nh EF migration xong
 using HybridWash.Repositories.Data;
 using HybridWash.Repositories.Implementations;
 using HybridWash.Repositories.Interfaces;
@@ -20,12 +21,21 @@ namespace HybridWash_BE_API
 
             // Add services to the container.
 
+            // ======================================================================
+            // TODO: UNCOMMENT cÃ¡c dÃ²ng DI sau khi cháº¡y lá»‡nh EF migration xong
+            // LÃ½ do comment: Models + Data (AutowashContext) Ä‘Ã£ bá»‹ xÃ³a Ä‘á»ƒ cáº­p nháº­t DB.
+            // ======================================================================
+
             // Configure DbContext
             builder.Services.AddDbContext<AutowashContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("MyCnn")));
 
             builder.Services.AddScoped<IAuthRepository, AuthRepository>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+
+            builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
+            builder.Services.AddScoped<IServiceService, ServiceService>();
+
             builder.Services.AddSingleton<ITokenGenerator, JwtTokenGenerator>();
 
             builder.Services.AddControllers();

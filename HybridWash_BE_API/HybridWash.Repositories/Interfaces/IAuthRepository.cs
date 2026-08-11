@@ -1,3 +1,4 @@
+﻿
 using HybridWash.Entities.Models;
 
 namespace HybridWash.Repositories.Interfaces;

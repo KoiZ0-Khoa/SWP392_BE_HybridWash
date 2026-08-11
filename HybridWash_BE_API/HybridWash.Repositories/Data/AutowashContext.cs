@@ -32,7 +32,7 @@ public partial class AutowashContext : DbContext
     {
         modelBuilder.Entity<Booking>(entity =>
         {
-            entity.HasKey(e => e.BookingId).HasName("PK__Bookings__73951ACD5230DB8E");
+            entity.HasKey(e => e.BookingId).HasName("PK__Bookings__73951ACD10088F5C");
 
             entity.Property(e => e.BookingId).HasColumnName("BookingID");
             entity.Property(e => e.ActualWashTime).HasColumnType("datetime");
@@ -43,6 +43,18 @@ public partial class AutowashContext : DbContext
             entity.Property(e => e.FinalPrice)
                 .HasDefaultValue(0m)
                 .HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.GuestLicensePlate)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.GuestName).HasMaxLength(100);
+            entity.Property(e => e.GuestPhone)
+                .HasMaxLength(15)
+                .IsUnicode(false);
+            entity.Property(e => e.GuestVehicleType)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.IncidentImage1).HasMaxLength(500);
+            entity.Property(e => e.IncidentImage2).HasMaxLength(500);
             entity.Property(e => e.OriginalPrice)
                 .HasDefaultValue(0m)
                 .HasColumnType("decimal(18, 2)");
@@ -50,6 +62,7 @@ public partial class AutowashContext : DbContext
             entity.Property(e => e.ServiceId).HasColumnName("ServiceID");
             entity.Property(e => e.SlotId).HasColumnName("SlotID");
             entity.Property(e => e.StaffId).HasColumnName("StaffID");
+            entity.Property(e => e.StaffNote).HasMaxLength(1000);
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
                 .IsUnicode(false)
@@ -58,38 +71,36 @@ public partial class AutowashContext : DbContext
 
             entity.HasOne(d => d.Customer).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.CustomerId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Bookings__Custom__5CD6CB2B");
+                .HasConstraintName("FK__Bookings__Custom__60A75C0F");
 
             entity.HasOne(d => d.Promotion).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.PromotionId)
-                .HasConstraintName("FK__Bookings__Promot__5FB337D6");
+                .HasConstraintName("FK__Bookings__Promot__6383C8BA");
 
             entity.HasOne(d => d.Service).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.ServiceId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Bookings__Servic__5EBF139D");
+                .HasConstraintName("FK__Bookings__Servic__628FA481");
 
             entity.HasOne(d => d.Slot).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.SlotId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Bookings__SlotID__60A75C0F");
+                .HasConstraintName("FK__Bookings__SlotID__6477ECF3");
 
             entity.HasOne(d => d.Staff).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.StaffId)
-                .HasConstraintName("FK__Bookings__StaffI__619B8048");
+                .HasConstraintName("FK__Bookings__StaffI__656C112C");
 
             entity.HasOne(d => d.Vehicle).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.VehicleId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Bookings__Vehicl__5DCAEF64");
+                .HasConstraintName("FK__Bookings__Vehicl__619B8048");
         });
 
         modelBuilder.Entity<Customer>(entity =>
         {
-            entity.HasKey(e => e.CustomerId).HasName("PK__Customer__A4AE64B8572FAFD9");
+            entity.HasKey(e => e.CustomerId).HasName("PK__Customer__A4AE64B8D3A53BAE");
 
-            entity.HasIndex(e => e.PhoneNumber, "UQ__Customer__85FB4E38444693F1").IsUnique();
+            entity.HasIndex(e => e.PhoneNumber, "UQ__Customer__85FB4E38B3548610").IsUnique();
 
             entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
             entity.Property(e => e.CreatedAt)
@@ -101,6 +112,9 @@ public partial class AutowashContext : DbContext
                 .IsUnicode(false)
                 .HasDefaultValue("Member");
             entity.Property(e => e.FullName).HasMaxLength(100);
+            entity.Property(e => e.PasswordHash)
+                .HasMaxLength(255)
+                .IsUnicode(false);
             entity.Property(e => e.PhoneNumber)
                 .HasMaxLength(15)
                 .IsUnicode(false);
@@ -111,7 +125,7 @@ public partial class AutowashContext : DbContext
 
         modelBuilder.Entity<PointLedger>(entity =>
         {
-            entity.HasKey(e => e.TransactionId).HasName("PK__PointLed__55433A4B7F860C84");
+            entity.HasKey(e => e.TransactionId).HasName("PK__PointLed__55433A4B3195A8D1");
 
             entity.ToTable("PointLedger");
 
@@ -128,19 +142,19 @@ public partial class AutowashContext : DbContext
 
             entity.HasOne(d => d.Booking).WithMany(p => p.PointLedgers)
                 .HasForeignKey(d => d.BookingId)
-                .HasConstraintName("FK__PointLedg__Booki__6754599E");
+                .HasConstraintName("FK__PointLedg__Booki__6C190EBB");
 
             entity.HasOne(d => d.Customer).WithMany(p => p.PointLedgers)
                 .HasForeignKey(d => d.CustomerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PointLedg__Custo__66603565");
+                .HasConstraintName("FK__PointLedg__Custo__6B24EA82");
         });
 
         modelBuilder.Entity<Promotion>(entity =>
         {
-            entity.HasKey(e => e.PromotionId).HasName("PK__Promotio__52C42F2F11E83FFE");
+            entity.HasKey(e => e.PromotionId).HasName("PK__Promotio__52C42F2F36596DAD");
 
-            entity.HasIndex(e => e.PromoCode, "UQ__Promotio__32DBED35625DB465").IsUnique();
+            entity.HasIndex(e => e.PromoCode, "UQ__Promotio__32DBED3595140775").IsUnique();
 
             entity.Property(e => e.PromotionId).HasColumnName("PromotionID");
             entity.Property(e => e.CreatedAt)
@@ -162,7 +176,7 @@ public partial class AutowashContext : DbContext
 
         modelBuilder.Entity<Service>(entity =>
         {
-            entity.HasKey(e => e.ServiceId).HasName("PK__Services__C51BB0EAF65825EF");
+            entity.HasKey(e => e.ServiceId).HasName("PK__Services__C51BB0EAB7B79E7F");
 
             entity.Property(e => e.ServiceId).HasColumnName("ServiceID");
             entity.Property(e => e.CreatedAt)
@@ -176,9 +190,9 @@ public partial class AutowashContext : DbContext
 
         modelBuilder.Entity<Staff>(entity =>
         {
-            entity.HasKey(e => e.StaffId).HasName("PK__Staff__96D4AAF7797C5542");
+            entity.HasKey(e => e.StaffId).HasName("PK__Staff__96D4AAF7BC695691");
 
-            entity.HasIndex(e => e.PhoneNumber, "UQ__Staff__85FB4E3892FE17C6").IsUnique();
+            entity.HasIndex(e => e.PhoneNumber, "UQ__Staff__85FB4E3850FF2E93").IsUnique();
 
             entity.Property(e => e.StaffId).HasColumnName("StaffID");
             entity.Property(e => e.CreatedAt)
@@ -186,6 +200,9 @@ public partial class AutowashContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.FullName).HasMaxLength(100);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.PasswordHash)
+                .HasMaxLength(255)
+                .IsUnicode(false);
             entity.Property(e => e.PhoneNumber)
                 .HasMaxLength(15)
                 .IsUnicode(false);
@@ -197,9 +214,11 @@ public partial class AutowashContext : DbContext
 
         modelBuilder.Entity<TimeSlot>(entity =>
         {
-            entity.HasKey(e => e.SlotId).HasName("PK__TimeSlot__0A124A4F39A50F17");
+            entity.HasKey(e => e.SlotId).HasName("PK__TimeSlot__0A124A4FD93E363B");
 
             entity.Property(e => e.SlotId).HasColumnName("SlotID");
+            entity.Property(e => e.BikeCapacity).HasDefaultValue(5);
+            entity.Property(e => e.CarCapacity).HasDefaultValue(2);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -208,17 +227,15 @@ public partial class AutowashContext : DbContext
 
         modelBuilder.Entity<Vehicle>(entity =>
         {
-            entity.HasKey(e => e.VehicleId).HasName("PK__Vehicles__476B54B225D23372");
+            entity.HasKey(e => e.VehicleId).HasName("PK__Vehicles__476B54B21101B620");
 
-            entity.HasIndex(e => e.LicensePlate, "UQ__Vehicles__026BC15C1D3BDEAB").IsUnique();
+            entity.HasIndex(e => e.LicensePlate, "UQ__Vehicles__026BC15CABA5DDE3").IsUnique();
 
             entity.Property(e => e.VehicleId).HasColumnName("VehicleID");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
-            entity.Property(e => e.ImageBackOrSideUrl).HasMaxLength(500);
-            entity.Property(e => e.ImageFrontUrl).HasMaxLength(500);
             entity.Property(e => e.LicensePlate)
                 .HasMaxLength(20)
                 .IsUnicode(false);
@@ -227,7 +244,7 @@ public partial class AutowashContext : DbContext
             entity.HasOne(d => d.Customer).WithMany(p => p.Vehicles)
                 .HasForeignKey(d => d.CustomerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Vehicles__Custom__412EB0B6");
+                .HasConstraintName("FK__Vehicles__Custom__4222D4EF");
         });
 
         OnModelCreatingPartial(modelBuilder);

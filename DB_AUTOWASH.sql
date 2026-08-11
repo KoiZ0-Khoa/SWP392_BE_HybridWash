@@ -189,3 +189,14 @@ CREATE TABLE PointLedger (
     FOREIGN KEY (BookingID) REFERENCES Bookings(BookingID)
 );
 GO
+
+
+-- Thêm cột PasswordHash cho bảng Khách hàng
+ALTER TABLE Customers 
+ADD PasswordHash VARCHAR(255) NULL;
+GO
+
+-- Thêm cột PasswordHash cho bảng Nhân viên
+ALTER TABLE Staff 
+ADD PasswordHash VARCHAR(255) NULL;
+GO
