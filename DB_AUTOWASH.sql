@@ -41,7 +41,6 @@ CREATE TABLE Vehicles (
 
     LicensePlate VARCHAR(20) NOT NULL UNIQUE,
     VehicleType NVARCHAR(50),
-    QrCode VARCHAR(255) UNIQUE,
 
     -- URL hình ảnh xe trước khi rửa
     ImageFrontUrl NVARCHAR(500),
@@ -63,6 +62,7 @@ CREATE TABLE Promotions (
 
     PromoCode VARCHAR(50) UNIQUE,
     PromoName NVARCHAR(100) NOT NULL,
+    Description NVARCHAR(500),
 
     PromoType VARCHAR(20)
         CHECK (PromoType IN ('Discount', 'FreeWash', 'AddOn')),
@@ -72,6 +72,8 @@ CREATE TABLE Promotions (
 
     ValidFrom DATETIME,
     ValidTo DATETIME,
+
+    IsActive BIT NOT NULL DEFAULT 1,
 
     CreatedAt DATETIME DEFAULT GETDATE()
 );
@@ -102,7 +104,7 @@ CREATE TABLE Staff (
     PasswordHash NVARCHAR(MAX) NOT NULL,
     
     Role VARCHAR(50) DEFAULT 'Washer'
-        CHECK (Role IN ('Washer', 'Manager', 'Admin', 'Staff')),
+        CHECK (Role IN ('Washer', 'Manager', 'Admin')),
 
     IsActive BIT DEFAULT 1, -- 1: Đang làm việc, 0: Đã nghỉ
     CreatedAt DATETIME DEFAULT GETDATE()
@@ -150,20 +152,9 @@ CREATE TABLE Bookings (
     -- Thời gian thực tế hoàn thành việc rửa
     ActualWashTime DATETIME NULL,
 
-    -- Thông tin khách vãng lai (Guest)
-    GuestName NVARCHAR(100) NULL,
-    GuestPhone VARCHAR(20) NULL,
-    GuestLicensePlate VARCHAR(50) NULL,
-    GuestVehicleType NVARCHAR(50) NULL,
-
-    -- Hình ảnh và ghi chú
-    IncidentImage1 NVARCHAR(500) NULL,
-    IncidentImage2 NVARCHAR(500) NULL,
-    StaffNote NVARCHAR(500) NULL,
-
     -- Trạng thái flow
     Status VARCHAR(20) DEFAULT 'Pending'
-        CONSTRAINT CHK_Bookings_Status CHECK (Status IN ('Pending', 'Confirmed', 'CheckedIn', 'Washing', 'Completed', 'CheckedOut', 'Cancelled', 'NoShow')),
+        CHECK (Status IN ('Pending', 'CheckedIn', 'Washing', 'Completed', 'Cancelled', 'NoShow')),
 
     CreatedAt DATETIME DEFAULT GETDATE(),
 
@@ -185,12 +176,15 @@ CREATE TABLE PointLedger (
 
     CustomerID INT NOT NULL,
     BookingID INT NULL,
+    RewardRedemptionID INT NULL,
 
     -- Dương = cộng điểm, Âm = trừ điểm
     Points INT NOT NULL,
 
     TransactionType VARCHAR(20)
         CHECK (TransactionType IN ('Earn', 'Redeem', 'Expire')),
+
+    Description NVARCHAR(500),
 
     -- Ngày hết hạn của giao dịch điểm
     ExpireDate DATETIME NULL,
@@ -202,28 +196,71 @@ CREATE TABLE PointLedger (
 );
 GO
 
+
 -- =============================================
--- 10. BẢNG BIÊN BẢN GỬI XE (PARKING RECEIPTS)
+-- 10. BẢNG PHẦN THƯỞNG
 -- =============================================
-CREATE TABLE ParkingReceipts (
-    ReceiptID INT IDENTITY(1,1) PRIMARY KEY,
-    BookingID INT NOT NULL UNIQUE,
+CREATE TABLE Rewards (
+    RewardID INT IDENTITY(1,1) NOT NULL,
+    RewardName NVARCHAR(100) NOT NULL,
+    Description NVARCHAR(500),
+    RewardType VARCHAR(20) NOT NULL
+        CHECK (RewardType IN ('Discount', 'FreeWash', 'AddOn')),
+    PointCost INT NOT NULL CHECK (PointCost > 0),
+    DiscountValue DECIMAL(18,2) NULL CHECK (DiscountValue IS NULL OR DiscountValue > 0),
+    ServiceID INT NULL,
+    MinimumTier VARCHAR(20) NOT NULL DEFAULT 'Member'
+        CHECK (MinimumTier IN ('Member', 'Silver', 'Gold', 'Platinum')),
+    ValidFrom DATETIME NULL,
+    ValidTo DATETIME NULL,
+    IsActive BIT NOT NULL DEFAULT 1,
+    CreatedAt DATETIME NULL DEFAULT GETDATE(),
 
-    IssueStaffID INT NOT NULL,
-    VerifyStaffID INT NULL,
-
-    Status VARCHAR(20) DEFAULT 'Issued'
-        CHECK (Status IN ('Issued', 'Verified')),
-
-    IsCustomerLeaving BIT DEFAULT 0,
-    CustomerSignature NVARCHAR(MAX) NULL,
-
-    IssuedAt DATETIME DEFAULT GETDATE(),
-    VerifiedAt DATETIME NULL,
-
-    FOREIGN KEY (BookingID) REFERENCES Bookings(BookingID),
-    FOREIGN KEY (IssueStaffID) REFERENCES Staff(StaffID),
-    FOREIGN KEY (VerifyStaffID) REFERENCES Staff(StaffID)
+    CONSTRAINT PK_Rewards PRIMARY KEY (RewardID),
+    CONSTRAINT UQ_Rewards_RewardName UNIQUE (RewardName),
+    CONSTRAINT FK_Rewards_Services FOREIGN KEY (ServiceID) REFERENCES Services(ServiceID),
+    CHECK (ValidFrom IS NULL OR ValidTo IS NULL OR ValidFrom < ValidTo)
 );
 GO
 
+CREATE INDEX IX_Rewards_ServiceID ON Rewards(ServiceID);
+GO
+
+
+-- =============================================
+-- 11. BẢNG LỊCH SỬ ĐỔI PHẦN THƯỞNG
+-- =============================================
+CREATE TABLE RewardRedemptions (
+    RedemptionID INT IDENTITY(1,1) NOT NULL,
+    RequestId UNIQUEIDENTIFIER NOT NULL,
+    CustomerID INT NOT NULL,
+    RewardID INT NOT NULL,
+    PointsSpent INT NOT NULL CHECK (PointsSpent > 0),
+    Status VARCHAR(20) NOT NULL DEFAULT 'Issued'
+        CHECK (Status IN ('Issued', 'Used', 'Cancelled', 'Expired')),
+    RedeemedAt DATETIME NOT NULL DEFAULT GETDATE(),
+    UsedAt DATETIME NULL,
+    BookingID INT NULL,
+
+    CONSTRAINT PK_RewardRedemptions PRIMARY KEY (RedemptionID),
+    CONSTRAINT UQ_RewardRedemptions_RequestId UNIQUE (RequestId),
+    CONSTRAINT FK_RewardRedemptions_Customers FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID),
+    CONSTRAINT FK_RewardRedemptions_Rewards FOREIGN KEY (RewardID) REFERENCES Rewards(RewardID),
+    CONSTRAINT FK_RewardRedemptions_Bookings FOREIGN KEY (BookingID) REFERENCES Bookings(BookingID)
+);
+GO
+
+CREATE INDEX IX_RewardRedemptions_CustomerID ON RewardRedemptions(CustomerID);
+CREATE INDEX IX_RewardRedemptions_RewardID ON RewardRedemptions(RewardID);
+CREATE INDEX IX_RewardRedemptions_BookingID ON RewardRedemptions(BookingID);
+GO
+
+ALTER TABLE PointLedger
+ADD CONSTRAINT FK_PointLedger_RewardRedemptions
+FOREIGN KEY (RewardRedemptionID) REFERENCES RewardRedemptions(RedemptionID);
+GO
+
+CREATE UNIQUE INDEX UX_PointLedger_RewardRedemptionID
+ON PointLedger(RewardRedemptionID)
+WHERE RewardRedemptionID IS NOT NULL;
+GO

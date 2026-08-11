@@ -11,6 +11,10 @@ public static class LoyaltyModuleExtensions
     {
         services.AddScoped<ILoyaltyRepository, LoyaltyRepository>();
         services.AddScoped<ILoyaltyService, LoyaltyService>();
+        services.AddScoped<IPromotionRepository, PromotionRepository>();
+        services.AddScoped<IPromotionService, PromotionService>();
+        services.AddScoped<IRewardRepository, RewardRepository>();
+        services.AddScoped<IRewardService, RewardService>();
 
         return services;
     }
