@@ -66,29 +66,12 @@ namespace HybridWash_BE_API.Controllers
         }
 
         [HttpPost("check-in")]
-        public async Task<IActionResult> CheckIn([FromBody] QrCodeActionRequestDTO request)
+        public async Task<IActionResult> CheckIn([FromBody] BookingIdRequestDTO request)
         {
             try
             {
                 var result = await _staffService.CheckInAsync(request);
                 return Ok(new { Success = true, Message = result });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { Message = ex.Message });
-            }
-        }
-
-        [HttpGet("scan-qr/{qrCode}")]
-        public async Task<IActionResult> ScanQrCode(string qrCode)
-        {
-            try
-            {
-                var result = await _staffService.GetBookingByQrCodeAsync(qrCode);
-                if (result == null)
-                    return NotFound(new { Message = "Không tìm thấy lịch đặt xe đang hoạt động với mã QR này." });
-                
-                return Ok(new { Success = true, Data = result });
             }
             catch (Exception ex)
             {
@@ -137,7 +120,7 @@ namespace HybridWash_BE_API.Controllers
         }
 
         [HttpPost("check-out")]
-        public async Task<IActionResult> CheckOut([FromBody] QrCodeActionRequestDTO request)
+        public async Task<IActionResult> CheckOut([FromBody] BookingIdRequestDTO request)
         {
             try
             {

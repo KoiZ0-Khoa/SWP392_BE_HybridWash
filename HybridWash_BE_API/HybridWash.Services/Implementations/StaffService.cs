@@ -27,8 +27,7 @@ namespace HybridWash.Services.Implementations
                 Status = b.Status,
                 SlotId = b.SlotId,
                 ServiceId = b.ServiceId,
-                BookingDate = b.BookingDate,
-                QrCode = b.Vehicle?.QrCode
+                BookingDate = b.BookingDate
             });
         }
 
@@ -54,32 +53,11 @@ namespace HybridWash.Services.Implementations
                     Status = b.Status,
                     SlotId = b.SlotId,
                     ServiceId = b.ServiceId,
-                    BookingDate = b.BookingDate,
-                    QrCode = b.Vehicle?.QrCode
+                    BookingDate = b.BookingDate
                 })
             };
 
             return response;
-        }
-
-        public async Task<BookingResponseDTO?> GetBookingByQrCodeAsync(string qrCode)
-        {
-            var booking = await _staffRepository.GetActiveBookingByQrCodeAsync(qrCode);
-            if (booking == null) return null;
-
-            return new BookingResponseDTO
-            {
-                BookingId = booking.BookingId,
-                CustomerName = booking.Customer?.FullName ?? booking.GuestName,
-                CustomerPhone = booking.Customer?.PhoneNumber ?? booking.GuestPhone,
-                LicensePlate = booking.Vehicle?.LicensePlate ?? booking.GuestLicensePlate ?? "",
-                VehicleType = booking.Vehicle?.VehicleType ?? booking.GuestVehicleType,
-                Status = booking.Status,
-                SlotId = booking.SlotId,
-                ServiceId = booking.ServiceId,
-                BookingDate = booking.BookingDate,
-                QrCode = booking.Vehicle?.QrCode
-            };
         }
 
         public async Task<bool> ConfirmBookingAsync(BookingIdRequestDTO request)
@@ -98,12 +76,12 @@ namespace HybridWash.Services.Implementations
             return true;
         }
 
-        public async Task<string> CheckInAsync(QrCodeActionRequestDTO request)
+        public async Task<string> CheckInAsync(BookingIdRequestDTO request)
         {
-            var booking = await _staffRepository.GetActiveBookingByQrCodeAsync(request.QrCode);
+            var booking = await _staffRepository.GetBookingByIdAsync(request.BookingId);
             if (booking == null)
             {
-                throw new Exception("Không tìm thấy Booking đang hoạt động với mã QR này.");
+                throw new Exception("Booking không tồn tại.");
             }
 
             var licensePlate = booking.Vehicle?.LicensePlate ?? booking.GuestLicensePlate ?? "Không xác định";
@@ -178,12 +156,12 @@ namespace HybridWash.Services.Implementations
             return true;
         }
 
-        public async Task<string> CheckOutAsync(QrCodeActionRequestDTO request, int staffId)
+        public async Task<string> CheckOutAsync(BookingIdRequestDTO request, int staffId)
         {
-            var booking = await _staffRepository.GetActiveBookingByQrCodeAsync(request.QrCode);
+            var booking = await _staffRepository.GetBookingByIdAsync(request.BookingId);
             if (booking == null)
             {
-                throw new Exception("Không tìm thấy thông tin đặt lịch đang hoạt động với mã QR này.");
+                throw new Exception("Booking không tồn tại.");
             }
 
             var licensePlate = booking.Vehicle?.LicensePlate ?? booking.GuestLicensePlate ?? "Không xác định";

@@ -252,7 +252,6 @@ namespace HybridWash.Services.Implementations
             VehicleId = b.VehicleId,
             LicensePlate = b.Vehicle?.LicensePlate ?? b.GuestLicensePlate ?? "",
             VehicleType = b.Vehicle?.VehicleType ?? b.GuestVehicleType,
-            QrCode = b.Vehicle?.QrCode,
             ServiceId = b.ServiceId,
             ServiceName = b.Service?.ServiceName ?? "",
             ServicePrice = b.Service?.Price ?? 0,

@@ -5,6 +5,5 @@ namespace HybridWash.Services.DTOs
         public int VehicleId { get; set; }
         public string LicensePlate { get; set; } = null!;
         public string VehicleType { get; set; } = null!;
-        public string? QrCode { get; set; }
     }
 }

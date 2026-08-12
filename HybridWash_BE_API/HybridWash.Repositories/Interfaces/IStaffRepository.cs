@@ -6,8 +6,6 @@ namespace HybridWash.Repositories.Interfaces
     {
         Task<IEnumerable<Booking>> GetTodayBookingsAsync();
         Task<IEnumerable<Booking>> GetBookingsByDateAsync(DateOnly date);
-        Task<Booking?> GetActiveBookingByQrCodeAsync(string qrCode);
-        Task<Booking?> GetPendingBookingByQrCodeAsync(string qrCode);
         Task UpdateBookingAsync(Booking booking);
         Task<Booking?> GetBookingByIdAsync(int bookingId);
         Task AddParkingReceiptAsync(ParkingReceipt receipt);

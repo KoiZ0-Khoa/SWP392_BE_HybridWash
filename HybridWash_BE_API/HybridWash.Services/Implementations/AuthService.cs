@@ -88,7 +88,6 @@ namespace HybridWash.Services.Implementations
                     {
                         LicensePlate = request.LicensePlate,
                         VehicleType = request.VehicleType,
-                        QrCode = Guid.NewGuid().ToString(),
                         CreatedAt = DateTime.UtcNow
                     }
                 }

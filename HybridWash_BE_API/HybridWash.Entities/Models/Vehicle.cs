@@ -13,8 +13,6 @@ public partial class Vehicle
 
     public string? VehicleType { get; set; }
 
-    public string? QrCode { get; set; }
-
     public DateTime? CreatedAt { get; set; }
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();

@@ -30,27 +30,6 @@ namespace HybridWash.Repositories.Implementations
                 .ToListAsync();
         }
 
-        public async Task<Booking?> GetActiveBookingByQrCodeAsync(string qrCode)
-        {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(7));
-            return await _context.Bookings
-                .Include(b => b.Vehicle)
-                .Include(b => b.Customer)
-                .FirstOrDefaultAsync(b => b.Vehicle != null && b.Vehicle.QrCode == qrCode 
-                    && b.BookingDate == today 
-                    && b.Status != "Cancelled" && b.Status != "NoShow" && b.Status != "CheckedOut");
-        }
-
-        public async Task<Booking?> GetPendingBookingByQrCodeAsync(string qrCode)
-        {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(7));
-            return await _context.Bookings
-                .Include(b => b.Vehicle)
-                .FirstOrDefaultAsync(b => b.Vehicle != null && b.Vehicle.QrCode == qrCode 
-                    && b.BookingDate == today 
-                    && (b.Status == "Pending" || b.Status == "Confirmed"));
-        }
-
         public Task UpdateBookingAsync(Booking booking)
         {
             _context.Bookings.Update(booking);
@@ -59,7 +38,9 @@ namespace HybridWash.Repositories.Implementations
 
         public async Task<Booking?> GetBookingByIdAsync(int bookingId)
         {
-            return await _context.Bookings.FindAsync(bookingId);
+            return await _context.Bookings
+                .Include(b => b.Vehicle)
+                .FirstOrDefaultAsync(b => b.BookingId == bookingId);
         }
 
         public async Task AddParkingReceiptAsync(ParkingReceipt receipt)

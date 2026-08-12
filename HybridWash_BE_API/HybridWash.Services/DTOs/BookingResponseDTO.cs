@@ -13,6 +13,5 @@ namespace HybridWash.Services.DTOs
         public int SlotId { get; set; }
         public int ServiceId { get; set; }
         public DateOnly BookingDate { get; set; }
-        public string? QrCode { get; set; }
     }
 }

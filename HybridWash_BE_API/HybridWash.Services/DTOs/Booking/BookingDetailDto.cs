@@ -18,7 +18,6 @@ namespace HybridWash.Services.DTOs.Booking
         public int? VehicleId { get; set; }
         public string LicensePlate { get; set; } = null!;
         public string? VehicleType { get; set; }
-        public string? QrCode { get; set; }
         // Service
         public int ServiceId { get; set; }
         public string ServiceName { get; set; } = null!;

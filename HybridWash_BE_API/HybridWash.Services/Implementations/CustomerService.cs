@@ -20,8 +20,7 @@ namespace HybridWash.Services.Implementations
             {
                 VehicleId = v.VehicleId,
                 LicensePlate = v.LicensePlate,
-                VehicleType = v.VehicleType,
-                QrCode = v.QrCode
+                VehicleType = v.VehicleType
             });
         }
     }
