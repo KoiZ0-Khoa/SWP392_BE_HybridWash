@@ -10,7 +10,10 @@ namespace HybridWash.Repositories.Interfaces
 {
     public interface IServiceRepository
     {
-        Task<List<Service>> GetActiveServicesAsync();
+        Task<IReadOnlyList<Service>> GetAllServicesAsync();
+        Task<IReadOnlyList<Service>> GetActiveServicesAsync();
         Task<Service?> GetServiceByIdAsync(int serviceId);
+        Task AddServiceAsync(Service service);
+        Task SaveChangesAsync();
     }
 }

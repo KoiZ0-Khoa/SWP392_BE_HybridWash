@@ -10,7 +10,11 @@ namespace HybridWash.Services.Interfaces
 {
     public interface IServiceService
     {
-        Task<List<ServiceDto>> GetActiveServicesAsync();
-        Task<ServiceDto> GetServiceByIdAsync(int serviceId);
+        Task<IReadOnlyList<ServiceDto>> GetAllServicesAsync();
+        Task<IReadOnlyList<ServiceDto>> GetActiveServicesAsync();
+        Task<ServiceDto?> GetServiceByIdAsync(int serviceId);
+        Task<ServiceDto> CreateServiceAsync(UpsertServiceDto request);
+        Task<bool> UpdateServiceAsync(int serviceId, UpsertServiceDto request);
+        Task<bool> DeactivateServiceAsync(int serviceId);
     }
 }

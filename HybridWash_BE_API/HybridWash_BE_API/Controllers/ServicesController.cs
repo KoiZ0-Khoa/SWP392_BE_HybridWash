@@ -1,5 +1,6 @@
 ﻿
 using HybridWash.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HybridWash_BE_API.Controllers
@@ -14,36 +15,21 @@ namespace HybridWash_BE_API.Controllers
             _serviceService = serviceService;
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> GetActiveServices()
         {
-            try
-            {
-                var services = await _serviceService.GetActiveServicesAsync();
-                return Ok(services);
-
-            }catch (Exception ex)
-            {
-                return BadRequest(new {message = ex.Message});
-            }
-
+            return Ok(await _serviceService.GetActiveServicesAsync());
         }
 
-        [HttpGet("/id")]
+        [AllowAnonymous]
+        [HttpGet("{id:int}")]
         public async Task<IActionResult> GetServiceById(int id)
         {
-            try
-            {
-                var service = await _serviceService.GetServiceByIdAsync(id);
-                return Ok(service);
-
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-
+            var service = await _serviceService.GetServiceByIdAsync(id);
+            return service == null || service.IsActive != true
+                ? NotFound(new { Message = "Service not found." })
+                : Ok(service);
         }
-
     }
 }
