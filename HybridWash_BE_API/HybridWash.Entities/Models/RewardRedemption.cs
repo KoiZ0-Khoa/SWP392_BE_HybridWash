@@ -25,6 +25,8 @@ public partial class RewardRedemption
 
     public virtual Booking? Booking { get; set; }
 
+    public virtual BookingAddOn? BookingAddOn { get; set; }
+
     public virtual Customer Customer { get; set; } = null!;
 
     public virtual PointLedger? PointLedger { get; set; }

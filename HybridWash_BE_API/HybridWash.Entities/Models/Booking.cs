@@ -47,6 +47,8 @@ public partial class Booking
 
     public virtual Customer? Customer { get; set; }
 
+    public virtual ICollection<BookingAddOn> BookingAddOns { get; set; } = new List<BookingAddOn>();
+
     public virtual ParkingReceipt? ParkingReceipt { get; set; }
 
     public virtual ICollection<PointLedger> PointLedgers { get; set; } = new List<PointLedger>();

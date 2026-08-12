@@ -35,5 +35,7 @@ public partial class Promotion
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
+    public virtual ICollection<BookingAddOn> BookingAddOns { get; set; } = new List<BookingAddOn>();
+
     public virtual Service? Service { get; set; }
 }
