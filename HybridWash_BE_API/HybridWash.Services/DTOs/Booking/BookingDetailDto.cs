@@ -32,6 +32,8 @@ namespace HybridWash.Services.DTOs.Booking
         public decimal? FinalPrice { get; set; }
         public int? PromotionId { get; set; }
         public string? PromoCode { get; set; }
+        public int? RedemptionId { get; set; }
+        public IReadOnlyList<BookingAddOnDto> AddOns { get; set; } = [];
         public string? Status { get; set; }
         public int? StaffId { get; set; }
         public string? StaffName { get; set; }

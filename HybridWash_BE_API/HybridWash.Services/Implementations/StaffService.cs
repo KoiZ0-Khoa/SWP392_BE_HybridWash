@@ -178,6 +178,10 @@ namespace HybridWash.Services.Implementations
             }
 
             booking.Status = "CheckedOut";
+            foreach (var addOn in booking.BookingAddOns)
+            {
+                addOn.Status = "Completed";
+            }
             
             await _staffRepository.UpdateBookingAsync(booking);
             await _staffRepository.SaveChangesAsync();

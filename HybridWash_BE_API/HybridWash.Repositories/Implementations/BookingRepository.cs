@@ -2,6 +2,7 @@ using HybridWash.Entities.Models;
 using HybridWash.Repositories.Data;
 using HybridWash.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace HybridWash.Repositories.Implementations
 {
@@ -64,11 +65,47 @@ namespace HybridWash.Repositories.Implementations
 
         // === CRUD ===
 
-        public async Task<Booking> CreateBookingAsync(Booking booking)
+        public async Task<Booking> CreateBookingAsync(
+            Booking booking,
+            int? redemptionId = null,
+            int? customerId = null,
+            DateTime? usedAt = null)
         {
-            await _context.Bookings.AddAsync(booking);
-            await _context.SaveChangesAsync();
-            return booking;
+            if (!redemptionId.HasValue)
+            {
+                await _context.Bookings.AddAsync(booking);
+                await _context.SaveChangesAsync();
+                return booking;
+            }
+
+            var strategy = _context.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await _context.Database
+                    .BeginTransactionAsync(IsolationLevel.Serializable);
+
+                var redemption = await _context.RewardRedemptions
+                    .FirstOrDefaultAsync(item => item.RedemptionId == redemptionId.Value);
+                if (redemption == null
+                    || redemption.CustomerId != customerId
+                    || redemption.Status != "Issued"
+                    || redemption.BookingId.HasValue)
+                {
+                    throw new InvalidOperationException(
+                        "Reward redemption is invalid, already used or does not belong to this customer.");
+                }
+
+                await _context.Bookings.AddAsync(booking);
+                await _context.SaveChangesAsync();
+
+                redemption.BookingId = booking.BookingId;
+                redemption.Status = "Used";
+                redemption.UsedAt = usedAt ?? DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+                return booking;
+            });
         }
 
         public async Task<Booking?> GetBookingByIdWithDetailsAsync(int bookingId)
@@ -80,6 +117,9 @@ namespace HybridWash.Repositories.Implementations
                 .Include(b => b.Slot)
                 .Include(b => b.Staff)
                 .Include(b => b.Promotion)
+                .Include(b => b.BookingAddOns)
+                    .ThenInclude(addOn => addOn.Service)
+                .Include(b => b.RewardRedemptions)
                 .FirstOrDefaultAsync(b => b.BookingId == bookingId);
         }
 
@@ -90,6 +130,9 @@ namespace HybridWash.Repositories.Implementations
                 .Include(b => b.Vehicle)
                 .Include(b => b.Service)
                 .Include(b => b.Slot)
+                .Include(b => b.BookingAddOns)
+                    .ThenInclude(addOn => addOn.Service)
+                .Include(b => b.RewardRedemptions)
                 .Where(b => (b.Customer != null && b.Customer.PhoneNumber == phone)
                          || b.GuestPhone == phone)
                 .OrderByDescending(b => b.BookingDate)
@@ -104,6 +147,9 @@ namespace HybridWash.Repositories.Implementations
                 .Include(b => b.Service)
                 .Include(b => b.Slot)
                 .Include(b => b.Staff)
+                .Include(b => b.BookingAddOns)
+                    .ThenInclude(addOn => addOn.Service)
+                .Include(b => b.RewardRedemptions)
                 .AsQueryable();
         }
 

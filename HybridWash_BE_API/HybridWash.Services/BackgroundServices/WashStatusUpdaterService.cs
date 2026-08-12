@@ -47,6 +47,7 @@ namespace HybridWash.Services.BackgroundServices
 
                 // Tìm các xe đang rửa (Washing)
                 var washingBookings = await dbContext.Bookings
+                    .Include(booking => booking.BookingAddOns)
                     .Where(b => b.Status == "Washing" && b.ActualWashTime.HasValue)
                     .ToListAsync(stoppingToken);
 
@@ -61,6 +62,10 @@ namespace HybridWash.Services.BackgroundServices
                     if (now >= washEndTime)
                     {
                         booking.Status = "Completed";
+                        foreach (var addOn in booking.BookingAddOns)
+                        {
+                            addOn.Status = "Completed";
+                        }
                         updatedCount++;
                     }
                 }

@@ -68,55 +68,60 @@ public class RewardRepository : IRewardRepository
         Guid requestId,
         DateTime redeemedAt)
     {
-        await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
-
-        var existing = await _context.RewardRedemptions
-            .Include(redemption => redemption.Reward)
-            .FirstOrDefaultAsync(redemption => redemption.RequestId == requestId);
-        if (existing != null)
+        var strategy = _context.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
+            await using var transaction = await _context.Database
+                .BeginTransactionAsync(IsolationLevel.Serializable);
+
+            var existing = await _context.RewardRedemptions
+                .Include(redemption => redemption.Reward)
+                .FirstOrDefaultAsync(redemption => redemption.RequestId == requestId);
+            if (existing != null)
+            {
+                await transaction.CommitAsync();
+                return existing.CustomerId == customerId ? existing : null;
+            }
+
+            var reward = await _context.Rewards.FirstAsync(item => item.RewardId == rewardId);
+            var customer = await _context.Customers.FirstAsync(item => item.CustomerId == customerId);
+            if ((customer.CurrentPoints ?? 0) < reward.PointCost)
+            {
+                await transaction.RollbackAsync();
+                return null;
+            }
+
+            customer.CurrentPoints = (customer.CurrentPoints ?? 0) - reward.PointCost;
+
+            var redemption = new RewardRedemption
+            {
+                RequestId = requestId,
+                CustomerId = customerId,
+                RewardId = rewardId,
+                PointsSpent = reward.PointCost,
+                Status = "Issued",
+                RedeemedAt = redeemedAt,
+                Reward = reward
+            };
+
+            _context.RewardRedemptions.Add(redemption);
+            await _context.SaveChangesAsync();
+
+            _context.PointLedgers.Add(new PointLedger
+            {
+                CustomerId = customerId,
+                RewardRedemptionId = redemption.RedemptionId,
+                Points = -reward.PointCost,
+                TransactionType = "Redeem",
+                Description = $"Redeemed reward: {reward.RewardName}",
+                CreatedAt = redeemedAt
+            });
+
+            await _context.SaveChangesAsync();
             await transaction.CommitAsync();
-            return existing.CustomerId == customerId ? existing : null;
-        }
 
-        var reward = await _context.Rewards.FirstAsync(item => item.RewardId == rewardId);
-        var customer = await _context.Customers.FirstAsync(item => item.CustomerId == customerId);
-        if ((customer.CurrentPoints ?? 0) < reward.PointCost)
-        {
-            await transaction.RollbackAsync();
-            return null;
-        }
-
-        customer.CurrentPoints = (customer.CurrentPoints ?? 0) - reward.PointCost;
-
-        var redemption = new RewardRedemption
-        {
-            RequestId = requestId,
-            CustomerId = customerId,
-            RewardId = rewardId,
-            PointsSpent = reward.PointCost,
-            Status = "Issued",
-            RedeemedAt = redeemedAt,
-            Reward = reward
-        };
-
-        _context.RewardRedemptions.Add(redemption);
-        await _context.SaveChangesAsync();
-
-        _context.PointLedgers.Add(new PointLedger
-        {
-            CustomerId = customerId,
-            RewardRedemptionId = redemption.RedemptionId,
-            Points = -reward.PointCost,
-            TransactionType = "Redeem",
-            Description = $"Redeemed reward: {reward.RewardName}",
-            CreatedAt = redeemedAt
+            return redemption;
         });
-
-        await _context.SaveChangesAsync();
-        await transaction.CommitAsync();
-
-        return redemption;
     }
 
     public async Task<IReadOnlyList<RewardRedemption>> GetRedemptionsAsync(int customerId)
@@ -127,5 +132,13 @@ public class RewardRepository : IRewardRepository
             .Where(redemption => redemption.CustomerId == customerId)
             .OrderByDescending(redemption => redemption.RedeemedAt)
             .ToListAsync();
+    }
+
+    public Task<RewardRedemption?> GetRedemptionByIdAsync(int redemptionId)
+    {
+        return _context.RewardRedemptions
+            .AsNoTracking()
+            .Include(redemption => redemption.Reward)
+            .FirstOrDefaultAsync(redemption => redemption.RedemptionId == redemptionId);
     }
 }

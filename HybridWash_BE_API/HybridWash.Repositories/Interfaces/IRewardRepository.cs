@@ -12,5 +12,6 @@ public interface IRewardRepository
     Task AddAsync(Reward reward);
     Task SaveChangesAsync();
     Task<RewardRedemption?> RedeemAsync(int customerId, int rewardId, Guid requestId, DateTime redeemedAt);
+    Task<RewardRedemption?> GetRedemptionByIdAsync(int redemptionId);
     Task<IReadOnlyList<RewardRedemption>> GetRedemptionsAsync(int customerId);
 }

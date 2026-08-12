@@ -10,7 +10,11 @@ namespace HybridWash.Repositories.Interfaces
         Task<int> CountBookingsInSlotByTypeAsync(int slotId, DateOnly bookingDate, string vehicleType);
         Task<bool> HasDuplicateBookingAsync(int? customerId, int slotId, DateOnly bookingDate, string? guestPhone);
         // CRUD
-        Task<Booking> CreateBookingAsync(Booking booking);
+        Task<Booking> CreateBookingAsync(
+            Booking booking,
+            int? redemptionId = null,
+            int? customerId = null,
+            DateTime? usedAt = null);
         Task<Booking?> GetBookingByIdWithDetailsAsync(int bookingId);
         Task<List<Booking>> GetBookingsByPhoneAsync(string phone);
         IQueryable<Booking> GetBookingsQueryable();

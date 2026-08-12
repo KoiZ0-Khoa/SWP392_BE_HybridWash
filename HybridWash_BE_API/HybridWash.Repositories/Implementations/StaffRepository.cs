@@ -40,6 +40,7 @@ namespace HybridWash.Repositories.Implementations
         {
             return await _context.Bookings
                 .Include(b => b.Vehicle)
+                .Include(b => b.BookingAddOns)
                 .FirstOrDefaultAsync(b => b.BookingId == bookingId);
         }
 

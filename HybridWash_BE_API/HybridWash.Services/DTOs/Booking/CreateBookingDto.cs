@@ -20,5 +20,6 @@ namespace HybridWash.Services.DTOs.Booking
         public int SlotId { get; set; }
         public DateOnly BookingDate { get; set; }
         public int? PromotionId { get; set; }
+        public int? RedemptionId { get; set; }
     }
 }
