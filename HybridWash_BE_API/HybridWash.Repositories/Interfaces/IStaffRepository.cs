@@ -11,6 +11,7 @@ namespace HybridWash.Repositories.Interfaces
         Task AddParkingReceiptAsync(ParkingReceipt receipt);
         Task<ParkingReceipt?> GetParkingReceiptByBookingIdAsync(int bookingId);
         Task UpdateParkingReceiptAsync(ParkingReceipt receipt);
+        Task<int> GetActiveWashingsCountAsync(string vehicleType);
         Task SaveChangesAsync();
     }
 }

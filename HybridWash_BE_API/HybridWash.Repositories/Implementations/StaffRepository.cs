@@ -41,6 +41,7 @@ namespace HybridWash.Repositories.Implementations
             return await _context.Bookings
                 .Include(b => b.Vehicle)
                 .Include(b => b.BookingAddOns)
+                .Include(b => b.Slot)
                 .FirstOrDefaultAsync(b => b.BookingId == bookingId);
         }
 
@@ -58,6 +59,15 @@ namespace HybridWash.Repositories.Implementations
         {
             _context.ParkingReceipts.Update(receipt);
             return Task.CompletedTask;
+        }
+
+        public async Task<int> GetActiveWashingsCountAsync(string vehicleType)
+        {
+            // Calculate number of active washings (Status = "Washing" or "CheckedIn") for the specific vehicle type.
+            return await _context.Bookings
+                .Include(b => b.Vehicle)
+                .CountAsync(b => (b.Status == "Washing" || b.Status == "CheckedIn") 
+                                 && (b.Vehicle != null ? b.Vehicle.VehicleType == vehicleType : b.GuestVehicleType == vehicleType));
         }
 
         public async Task SaveChangesAsync()

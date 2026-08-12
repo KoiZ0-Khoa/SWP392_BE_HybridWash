@@ -57,6 +57,7 @@ namespace HybridWash_BE_API
             builder.Services.AddScoped<IBookingRepository, BookingRepository>();
             builder.Services.AddScoped<IBookingService, BookingService>();
 
+            builder.Services.AddMemoryCache();
 
             // Background Service for Washing Automation
             builder.Services.AddHostedService<HybridWash.Services.BackgroundServices.WashStatusUpdaterService>();

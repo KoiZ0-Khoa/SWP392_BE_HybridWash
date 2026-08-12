@@ -2,6 +2,9 @@ using HybridWash.Entities.Models;
 using HybridWash.Repositories.Interfaces;
 using HybridWash.Services.DTOs;
 using HybridWash.Services.Interfaces;
+using Microsoft.Extensions.Caching.Memory;
+using System;
+using System.Threading.Tasks;
 
 namespace HybridWash.Services.Implementations
 {
@@ -9,11 +12,13 @@ namespace HybridWash.Services.Implementations
     {
         private readonly IAuthRepository _authRepository;
         private readonly ITokenGenerator _tokenGenerator;
+        private readonly IMemoryCache _memoryCache;
 
-        public AuthService(IAuthRepository authRepository, ITokenGenerator tokenGenerator)
+        public AuthService(IAuthRepository authRepository, ITokenGenerator tokenGenerator, IMemoryCache memoryCache)
         {
             _authRepository = authRepository;
             _tokenGenerator = tokenGenerator;
+            _memoryCache = memoryCache;
         }
 
         public async Task<AuthResponseDTO> LoginAsync(LoginRequestDTO request)
@@ -130,6 +135,64 @@ namespace HybridWash.Services.Implementations
                 FullName = staff.FullName,
                 Role = staff.Role
             };
+        }
+
+        public async Task<string> ForgotPasswordAsync(ForgotPasswordRequestDTO request)
+        {
+            var customer = await _authRepository.GetCustomerByPhoneNumberAsync(request.PhoneNumber);
+            var staff = await _authRepository.GetStaffByPhoneNumberAsync(request.PhoneNumber);
+
+            if (customer == null && staff == null)
+            {
+                throw new Exception("Số điện thoại không tồn tại trong hệ thống.");
+            }
+
+            // Generate 6-digit OTP
+            var otp = new Random().Next(100000, 999999).ToString();
+
+            // Save to memory cache with 5 minutes expiration
+            _memoryCache.Set($"OTP_{request.PhoneNumber}", otp, TimeSpan.FromMinutes(5));
+
+            // In real app, we would send SMS here. For now, just return it.
+            return otp;
+        }
+
+        public async Task<bool> ResetPasswordAsync(ResetPasswordRequestDTO request)
+        {
+            if (!_memoryCache.TryGetValue($"OTP_{request.PhoneNumber}", out string? cachedOtp))
+            {
+                throw new Exception("Mã OTP đã hết hạn hoặc không tồn tại.");
+            }
+
+            if (cachedOtp != request.OTP)
+            {
+                throw new Exception("Mã OTP không chính xác.");
+            }
+
+            var newPasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+
+            var staff = await _authRepository.GetStaffByPhoneNumberAsync(request.PhoneNumber);
+            if (staff != null)
+            {
+                staff.PasswordHash = newPasswordHash;
+                await _authRepository.UpdateStaffAsync(staff);
+            }
+            else
+            {
+                var customer = await _authRepository.GetCustomerByPhoneNumberAsync(request.PhoneNumber);
+                if (customer != null)
+                {
+                    customer.PasswordHash = newPasswordHash;
+                    await _authRepository.UpdateCustomerAsync(customer);
+                }
+                else
+                {
+                    throw new Exception("Số điện thoại không tồn tại trong hệ thống.");
+                }
+            }
+
+            _memoryCache.Remove($"OTP_{request.PhoneNumber}");
+            return true;
         }
     }
 }

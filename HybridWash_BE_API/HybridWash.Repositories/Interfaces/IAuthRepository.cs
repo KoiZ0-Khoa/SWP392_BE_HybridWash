@@ -13,4 +13,7 @@ public interface IAuthRepository
     
     Task<bool> StaffPhoneNumberExistsAsync(string phoneNumber);
     Task AddStaffAsync(Staff staff);
+    
+    Task UpdateCustomerAsync(Customer customer);
+    Task UpdateStaffAsync(Staff staff);
 }

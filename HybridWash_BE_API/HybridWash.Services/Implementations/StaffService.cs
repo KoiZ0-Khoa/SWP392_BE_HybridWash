@@ -91,6 +91,34 @@ namespace HybridWash.Services.Implementations
                 throw new Exception($"Booking của xe {licensePlate} đang ở trạng thái {booking.Status}, không thể Check-in.");
             }
 
+            var currentTime = DateTime.UtcNow.AddHours(7); // VN Time
+            var currentDate = DateOnly.FromDateTime(currentTime);
+            var currentTimeOnly = TimeOnly.FromDateTime(currentTime);
+
+            if (booking.BookingDate != currentDate)
+            {
+                throw new Exception($"Booking này dành cho ngày {booking.BookingDate}, không thể Check-in hôm nay.");
+            }
+
+            var slotStartTime = booking.Slot.StartTime;
+            
+            if (currentTimeOnly < slotStartTime.AddMinutes(-15))
+            {
+                throw new Exception($"Chưa đến giờ. Vui lòng quay lại sau. (Giờ đặt: {slotStartTime})");
+            }
+            
+            if (currentTimeOnly >= slotStartTime.AddMinutes(-15) && currentTimeOnly < slotStartTime)
+            {
+                var vehicleType = booking.Vehicle?.VehicleType ?? booking.GuestVehicleType ?? "Car";
+                var capacity = vehicleType.Equals("Car", StringComparison.OrdinalIgnoreCase) ? booking.Slot.CarCapacity : booking.Slot.BikeCapacity;
+                var activeWashings = await _staffRepository.GetActiveWashingsCountAsync(vehicleType);
+
+                if (activeWashings >= capacity)
+                {
+                    throw new Exception("Vui lòng đợi đến đúng giờ, hiện không có chỗ trống.");
+                }
+            }
+
             booking.Status = "Washing";
             booking.ActualWashTime = DateTime.UtcNow;
             await _staffRepository.UpdateBookingAsync(booking);
@@ -105,11 +133,6 @@ namespace HybridWash.Services.Implementations
             if (booking == null)
             {
                 throw new Exception("Booking không tồn tại.");
-            }
-
-            if (request.IsCustomerLeaving && string.IsNullOrEmpty(request.CustomerSignature))
-            {
-                throw new Exception("Khách hàng rời đi nên bắt buộc phải có chữ ký xác nhận (CustomerSignature).");
             }
 
             // Lưu 2 ảnh hiện trạng xe (Incident Images)

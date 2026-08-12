@@ -51,4 +51,16 @@ public class AuthRepository : IAuthRepository
         await _context.Staff.AddAsync(staff);
         await _context.SaveChangesAsync();
     }
+
+    public async Task UpdateCustomerAsync(Customer customer)
+    {
+        _context.Customers.Update(customer);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UpdateStaffAsync(Staff staff)
+    {
+        _context.Staff.Update(staff);
+        await _context.SaveChangesAsync();
+    }
 }

@@ -8,5 +8,7 @@ namespace HybridWash.Services.Interfaces
         Task<AuthResponseDTO> LoginAsync(LoginRequestDTO request);
         Task<AuthResponseDTO> RegisterCustomerAsync(RegisterRequestDTO request);
         Task<AuthResponseDTO> CreateStaffAsync(CreateStaffRequestDTO request);
+        Task<string> ForgotPasswordAsync(ForgotPasswordRequestDTO request);
+        Task<bool> ResetPasswordAsync(ResetPasswordRequestDTO request);
     }
 }
