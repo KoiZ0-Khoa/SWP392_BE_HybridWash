@@ -18,4 +18,6 @@ public partial class Service
     public DateTime? CreatedAt { get; set; }
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+
+    public virtual ICollection<Reward> Rewards { get; set; } = new List<Reward>();
 }

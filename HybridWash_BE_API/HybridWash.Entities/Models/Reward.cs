@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace HybridWash.Entities.Models;
 
-public class Reward
+public partial class Reward
 {
     public int RewardId { get; set; }
 
@@ -19,7 +19,7 @@ public class Reward
 
     public int? ServiceId { get; set; }
 
-    public string MinimumTier { get; set; } = "Member";
+    public string MinimumTier { get; set; } = null!;
 
     public DateTime? ValidFrom { get; set; }
 
@@ -29,7 +29,7 @@ public class Reward
 
     public DateTime? CreatedAt { get; set; }
 
-    public virtual Service? Service { get; set; }
+    public virtual ICollection<RewardRedemption> RewardRedemptions { get; set; } = new List<RewardRedemption>();
 
-    public virtual ICollection<RewardRedemption> Redemptions { get; set; } = new List<RewardRedemption>();
+    public virtual Service? Service { get; set; }
 }

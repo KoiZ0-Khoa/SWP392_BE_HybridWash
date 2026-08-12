@@ -9,6 +9,8 @@ public partial class Customer
 
     public string PhoneNumber { get; set; } = null!;
 
+    public string PasswordHash { get; set; } = null!;
+
     public string FullName { get; set; } = null!;
 
     public string? CurrentTier { get; set; }
@@ -18,8 +20,6 @@ public partial class Customer
     public int? CurrentPoints { get; set; }
 
     public DateTime? CreatedAt { get; set; }
-
-    public string? PasswordHash { get; set; }
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
