@@ -146,10 +146,13 @@ namespace HybridWash.Services.Implementations
             };
         }
 
-        // ========== GET BY CUSTOMER ==========
-        public async Task<List<BookingDto>> GetBookingsByCustomerIdAsync(int customerId)
+        // ========== GET BY PHONE ==========
+        public async Task<List<BookingDto>> GetBookingsByPhoneAsync(string phone)
         {
-            var bookings = await _bookingRepo.GetBookingsByCustomerIdAsync(customerId);
+            if (string.IsNullOrWhiteSpace(phone))
+                throw new ArgumentException("Phone number is required");
+
+            var bookings = await _bookingRepo.GetBookingsByPhoneAsync(phone.Trim());
             return bookings.Select(MapToBookingDto).ToList();
         }
 
@@ -173,6 +176,31 @@ namespace HybridWash.Services.Implementations
 
             booking.Status = "Cancelled";
             await _bookingRepo.SaveChangesAsync();
+        }
+
+        // ========== UPDATE STATUS ==========
+        public async Task<BookingDto> UpdateBookingStatusAsync(int bookingId, string status)
+        {
+            var booking = await _bookingRepo.GetBookingByIdWithDetailsAsync(bookingId);
+            if (booking == null)
+                throw new Exception("Booking not found");
+
+            var allowedStatuses = new[]
+            {
+                "Pending", "Confirmed", "Washing", "Completed",
+                "CheckedOut", "Cancelled", "NoShow"
+            };
+            var normalizedStatus = allowedStatuses.FirstOrDefault(value =>
+                value.Equals(status?.Trim(), StringComparison.OrdinalIgnoreCase));
+
+            if (normalizedStatus == null)
+                throw new ArgumentException(
+                    $"Status must be one of: {string.Join(", ", allowedStatuses)}");
+
+            booking.Status = normalizedStatus;
+            await _bookingRepo.SaveChangesAsync();
+
+            return MapToBookingDto(booking);
         }
 
         // ========== ADMIN LIST ==========
