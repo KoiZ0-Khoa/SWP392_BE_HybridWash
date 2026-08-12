@@ -83,14 +83,15 @@ namespace HybridWash.Repositories.Implementations
                 .FirstOrDefaultAsync(b => b.BookingId == bookingId);
         }
 
-        public async Task<List<Booking>> GetBookingsByCustomerIdAsync(int customerId)
+        public async Task<List<Booking>> GetBookingsByPhoneAsync(string phone)
         {
             return await _context.Bookings
                 .Include(b => b.Customer)
                 .Include(b => b.Vehicle)
                 .Include(b => b.Service)
                 .Include(b => b.Slot)
-                .Where(b => b.CustomerId == customerId)
+                .Where(b => (b.Customer != null && b.Customer.PhoneNumber == phone)
+                         || b.GuestPhone == phone)
                 .OrderByDescending(b => b.BookingDate)
                 .ToListAsync();
         }

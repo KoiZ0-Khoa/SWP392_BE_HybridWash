@@ -115,7 +115,7 @@ namespace HybridWash.Services.Implementations
                 ServiceId = dto.ServiceId,
                 SlotId = dto.SlotId,
                 BookingDate = dto.BookingDate,
-                PromotionId = dto.PromotionId,
+                PromotionId = dto.PromotionId > 0 ? dto.PromotionId : null,
                 OriginalPrice = service.Price,
                 FinalPrice = service.Price,
                 Status = "Pending",

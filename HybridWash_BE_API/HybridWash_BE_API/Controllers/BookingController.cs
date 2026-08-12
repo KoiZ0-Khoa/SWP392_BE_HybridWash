@@ -36,13 +36,16 @@ namespace HybridWash_BE_API.Controllers
             }
         }
 
-        [HttpGet("customer/{customerId}")]
+        [HttpGet("search")]
         [Authorize]
-        public async Task<IActionResult> GetBookingsByCustomer(int customerId)
+        public async Task<IActionResult> GetBookingsByPhone([FromQuery] string phone)
         {
             try
             {
-                var bookings = await _bookingService.GetBookingsByCustomerIdAsync(customerId);
+                if (string.IsNullOrWhiteSpace(phone))
+                    return BadRequest(new { Message = "Phone number is required" });
+
+                var bookings = await _bookingService.GetBookingsByPhoneAsync(phone);
                 return Ok(new { Success = true, Data = bookings });
             }
             catch (Exception ex)
@@ -74,6 +77,23 @@ namespace HybridWash_BE_API.Controllers
             {
                 await _bookingService.CancelBookingAsync(bookingId);
                 return Ok(new { Success = true, Message = "Booking cancelled successfully" });
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("not found"))
+                    return NotFound(new { Message = ex.Message });
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+
+        [HttpPut("{bookingId}/status")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> UpdateBookingStatus(int bookingId, [FromQuery] string status)
+        {
+            try
+            {
+                var booking = await _bookingService.UpdateBookingStatusAsync(bookingId, status);
+                return Ok(new { Success = true, Data = booking });
             }
             catch (Exception ex)
             {

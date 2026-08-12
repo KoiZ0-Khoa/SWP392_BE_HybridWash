@@ -12,7 +12,7 @@ namespace HybridWash.Repositories.Interfaces
         // CRUD
         Task<Booking> CreateBookingAsync(Booking booking);
         Task<Booking?> GetBookingByIdWithDetailsAsync(int bookingId);
-        Task<List<Booking>> GetBookingsByCustomerIdAsync(int customerId);
+        Task<List<Booking>> GetBookingsByPhoneAsync(string phone);
         IQueryable<Booking> GetBookingsQueryable();
         // Save
         Task SaveChangesAsync();
