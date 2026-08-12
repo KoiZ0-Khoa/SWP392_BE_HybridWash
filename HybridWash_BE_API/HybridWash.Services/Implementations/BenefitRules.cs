@@ -4,6 +4,7 @@ internal static class BenefitRules
 {
     private static readonly string[] TierOrder = ["Member", "Silver", "Gold", "Platinum"];
     private static readonly string[] BenefitTypes = ["Discount", "FreeWash", "AddOn"];
+    private static readonly string[] DiscountTypes = ["Fixed", "Percent"];
 
     public static string NormalizeTier(string value, bool allowAll)
     {
@@ -20,6 +21,13 @@ internal static class BenefitRules
     {
         return BenefitTypes.FirstOrDefault(type => type.Equals(value, StringComparison.OrdinalIgnoreCase))
             ?? throw new ArgumentException("Type must be Discount, FreeWash or AddOn.");
+    }
+
+    public static string NormalizeDiscountType(string value)
+    {
+        return DiscountTypes.FirstOrDefault(type =>
+            type.Equals(value, StringComparison.OrdinalIgnoreCase))
+            ?? throw new ArgumentException("DiscountType must be Fixed or Percent.");
     }
 
     public static bool IsTierEligible(string? customerTier, string requiredTier)

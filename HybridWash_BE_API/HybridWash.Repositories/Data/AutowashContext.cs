@@ -14,6 +14,8 @@ public partial class AutowashContext : DbContext
 
     public virtual DbSet<Booking> Bookings { get; set; }
 
+    public virtual DbSet<BookingAddOn> BookingAddOns { get; set; }
+
     public virtual DbSet<Customer> Customers { get; set; }
 
     public virtual DbSet<ParkingReceipt> ParkingReceipts { get; set; }
@@ -100,6 +102,53 @@ public partial class AutowashContext : DbContext
             entity.HasOne(d => d.Vehicle).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.VehicleId)
                 .HasConstraintName("FK__Bookings__Vehicl__5EBF139D");
+        });
+
+        modelBuilder.Entity<BookingAddOn>(entity =>
+        {
+            entity.HasKey(e => e.BookingAddOnId);
+
+            entity.Property(e => e.BookingAddOnId).HasColumnName("BookingAddOnID");
+            entity.Property(e => e.BookingId).HasColumnName("BookingID");
+            entity.Property(e => e.ServiceId).HasColumnName("ServiceID");
+            entity.Property(e => e.PromotionId).HasColumnName("PromotionID");
+            entity.Property(e => e.RedemptionId).HasColumnName("RedemptionID");
+            entity.Property(e => e.OriginalPrice).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.FinalPrice).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Status)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasDefaultValue("Pending");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasIndex(e => e.BookingId, "IX_BookingAddOns_BookingID");
+            entity.HasIndex(e => e.ServiceId, "IX_BookingAddOns_ServiceID");
+            entity.HasIndex(e => e.PromotionId, "IX_BookingAddOns_PromotionID");
+            entity.HasIndex(e => e.RedemptionId, "UX_BookingAddOns_RedemptionID")
+                .IsUnique()
+                .HasFilter("[RedemptionID] IS NOT NULL");
+
+            entity.HasOne(e => e.Booking).WithMany(e => e.BookingAddOns)
+                .HasForeignKey(e => e.BookingId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_BookingAddOns_Bookings");
+
+            entity.HasOne(e => e.Service).WithMany(e => e.BookingAddOns)
+                .HasForeignKey(e => e.ServiceId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_BookingAddOns_Services");
+
+            entity.HasOne(e => e.Promotion).WithMany(e => e.BookingAddOns)
+                .HasForeignKey(e => e.PromotionId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_BookingAddOns_Promotions");
+
+            entity.HasOne(e => e.Redemption).WithOne(e => e.BookingAddOn)
+                .HasForeignKey<BookingAddOn>(e => e.RedemptionId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_BookingAddOns_RewardRedemptions");
         });
 
         modelBuilder.Entity<Customer>(entity =>
@@ -209,7 +258,12 @@ public partial class AutowashContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.DiscountType)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.DiscountValue).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.MaxDiscount).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.PromoCode)
                 .HasMaxLength(50)
                 .IsUnicode(false);
@@ -217,11 +271,16 @@ public partial class AutowashContext : DbContext
             entity.Property(e => e.PromoType)
                 .HasMaxLength(20)
                 .IsUnicode(false);
+            entity.Property(e => e.ServiceId).HasColumnName("ServiceID");
             entity.Property(e => e.TargetTier)
                 .HasMaxLength(20)
                 .IsUnicode(false);
             entity.Property(e => e.ValidFrom).HasColumnType("datetime");
             entity.Property(e => e.ValidTo).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Service).WithMany(p => p.Promotions)
+                .HasForeignKey(d => d.ServiceId)
+                .HasConstraintName("FK_Promotions_Services");
         });
 
         modelBuilder.Entity<Reward>(entity =>

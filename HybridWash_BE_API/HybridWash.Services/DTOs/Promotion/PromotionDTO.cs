@@ -7,6 +7,10 @@ public class PromotionDTO
     public string PromoName { get; set; } = null!;
     public string? Description { get; set; }
     public string PromoType { get; set; } = null!;
+    public string? DiscountType { get; set; }
+    public decimal? DiscountValue { get; set; }
+    public decimal? MaxDiscount { get; set; }
+    public int? ServiceId { get; set; }
     public string TargetTier { get; set; } = null!;
     public DateTime? ValidFrom { get; set; }
     public DateTime? ValidTo { get; set; }

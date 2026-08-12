@@ -4,6 +4,7 @@ using HybridWash.Repositories.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HybridWash.Repositories.Migrations
 {
     [DbContext(typeof(AutowashContext))]
-    partial class AutowashContextModelSnapshot : ModelSnapshot
+    [Migration("20260812013703_AddPromotionBenefitValues")]
+    partial class AddPromotionBenefitValues
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -130,65 +133,6 @@ namespace HybridWash.Repositories.Migrations
                     b.HasIndex("VehicleId");
 
                     b.ToTable("Bookings");
-                });
-
-            modelBuilder.Entity("HybridWash.Entities.Models.BookingAddOn", b =>
-                {
-                    b.Property<int>("BookingAddOnId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("BookingAddOnID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("BookingAddOnId"));
-
-                    b.Property<int>("BookingId")
-                        .HasColumnType("int")
-                        .HasColumnName("BookingID");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime")
-                        .HasDefaultValueSql("(getdate())");
-
-                    b.Property<decimal>("FinalPrice")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<decimal>("OriginalPrice")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<int?>("PromotionId")
-                        .HasColumnType("int")
-                        .HasColumnName("PromotionID");
-
-                    b.Property<int?>("RedemptionId")
-                        .HasColumnType("int")
-                        .HasColumnName("RedemptionID");
-
-                    b.Property<int>("ServiceId")
-                        .HasColumnType("int")
-                        .HasColumnName("ServiceID");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)")
-                        .HasDefaultValue("Pending");
-
-                    b.HasKey("BookingAddOnId");
-
-                    b.HasIndex(new[] { "BookingId" }, "IX_BookingAddOns_BookingID");
-
-                    b.HasIndex(new[] { "PromotionId" }, "IX_BookingAddOns_PromotionID");
-
-                    b.HasIndex(new[] { "ServiceId" }, "IX_BookingAddOns_ServiceID");
-
-                    b.HasIndex(new[] { "RedemptionId" }, "UX_BookingAddOns_RedemptionID")
-                        .IsUnique()
-                        .HasFilter("[RedemptionID] IS NOT NULL");
-
-                    b.ToTable("BookingAddOns");
                 });
 
             modelBuilder.Entity("HybridWash.Entities.Models.Customer", b =>
@@ -773,43 +717,6 @@ namespace HybridWash.Repositories.Migrations
                     b.Navigation("Vehicle");
                 });
 
-            modelBuilder.Entity("HybridWash.Entities.Models.BookingAddOn", b =>
-                {
-                    b.HasOne("HybridWash.Entities.Models.Booking", "Booking")
-                        .WithMany("BookingAddOns")
-                        .HasForeignKey("BookingId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_BookingAddOns_Bookings");
-
-                    b.HasOne("HybridWash.Entities.Models.Promotion", "Promotion")
-                        .WithMany("BookingAddOns")
-                        .HasForeignKey("PromotionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("FK_BookingAddOns_Promotions");
-
-                    b.HasOne("HybridWash.Entities.Models.RewardRedemption", "Redemption")
-                        .WithOne("BookingAddOn")
-                        .HasForeignKey("HybridWash.Entities.Models.BookingAddOn", "RedemptionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("FK_BookingAddOns_RewardRedemptions");
-
-                    b.HasOne("HybridWash.Entities.Models.Service", "Service")
-                        .WithMany("BookingAddOns")
-                        .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("FK_BookingAddOns_Services");
-
-                    b.Navigation("Booking");
-
-                    b.Navigation("Promotion");
-
-                    b.Navigation("Redemption");
-
-                    b.Navigation("Service");
-                });
-
             modelBuilder.Entity("HybridWash.Entities.Models.ParkingReceipt", b =>
                 {
                     b.HasOne("HybridWash.Entities.Models.Booking", "Booking")
@@ -920,8 +827,6 @@ namespace HybridWash.Repositories.Migrations
 
             modelBuilder.Entity("HybridWash.Entities.Models.Booking", b =>
                 {
-                    b.Navigation("BookingAddOns");
-
                     b.Navigation("ParkingReceipt");
 
                     b.Navigation("PointLedgers");
@@ -942,8 +847,6 @@ namespace HybridWash.Repositories.Migrations
 
             modelBuilder.Entity("HybridWash.Entities.Models.Promotion", b =>
                 {
-                    b.Navigation("BookingAddOns");
-
                     b.Navigation("Bookings");
                 });
 
@@ -954,15 +857,11 @@ namespace HybridWash.Repositories.Migrations
 
             modelBuilder.Entity("HybridWash.Entities.Models.RewardRedemption", b =>
                 {
-                    b.Navigation("BookingAddOn");
-
                     b.Navigation("PointLedger");
                 });
 
             modelBuilder.Entity("HybridWash.Entities.Models.Service", b =>
                 {
-                    b.Navigation("BookingAddOns");
-
                     b.Navigation("Bookings");
 
                     b.Navigation("Promotions");
