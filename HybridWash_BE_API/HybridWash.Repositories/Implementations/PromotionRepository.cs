@@ -46,6 +46,12 @@ public class PromotionRepository : IPromotionRepository
             && (!excludingPromotionId.HasValue || promotion.PromotionId != excludingPromotionId));
     }
 
+    public Task<bool> ServiceExistsAsync(int serviceId)
+    {
+        return _context.Services.AnyAsync(service =>
+            service.ServiceId == serviceId && service.IsActive == true);
+    }
+
     public async Task AddAsync(Promotion promotion)
     {
         _context.Promotions.Add(promotion);

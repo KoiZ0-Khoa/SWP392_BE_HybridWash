@@ -15,6 +15,14 @@ public partial class Promotion
 
     public string? PromoType { get; set; }
 
+    public string? DiscountType { get; set; }
+
+    public decimal? DiscountValue { get; set; }
+
+    public decimal? MaxDiscount { get; set; }
+
+    public int? ServiceId { get; set; }
+
     public string? TargetTier { get; set; }
 
     public DateTime? ValidFrom { get; set; }
@@ -26,4 +34,6 @@ public partial class Promotion
     public DateTime? CreatedAt { get; set; }
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+
+    public virtual Service? Service { get; set; }
 }

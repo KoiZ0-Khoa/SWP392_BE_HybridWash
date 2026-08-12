@@ -19,5 +19,7 @@ public partial class Service
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
+    public virtual ICollection<Promotion> Promotions { get; set; } = new List<Promotion>();
+
     public virtual ICollection<Reward> Rewards { get; set; } = new List<Reward>();
 }

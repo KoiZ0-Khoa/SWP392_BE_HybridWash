@@ -209,7 +209,12 @@ public partial class AutowashContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.DiscountType)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.DiscountValue).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.MaxDiscount).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.PromoCode)
                 .HasMaxLength(50)
                 .IsUnicode(false);
@@ -217,11 +222,16 @@ public partial class AutowashContext : DbContext
             entity.Property(e => e.PromoType)
                 .HasMaxLength(20)
                 .IsUnicode(false);
+            entity.Property(e => e.ServiceId).HasColumnName("ServiceID");
             entity.Property(e => e.TargetTier)
                 .HasMaxLength(20)
                 .IsUnicode(false);
             entity.Property(e => e.ValidFrom).HasColumnType("datetime");
             entity.Property(e => e.ValidTo).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Service).WithMany(p => p.Promotions)
+                .HasForeignKey(d => d.ServiceId)
+                .HasConstraintName("FK_Promotions_Services");
         });
 
         modelBuilder.Entity<Reward>(entity =>

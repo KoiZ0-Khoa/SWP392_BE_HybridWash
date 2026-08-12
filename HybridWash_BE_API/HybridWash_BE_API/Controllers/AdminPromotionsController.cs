@@ -49,6 +49,10 @@ public class AdminPromotionsController : ControllerBase
         {
             return BadRequest(new { Message = ex.Message });
         }
+        catch (KeyNotFoundException ex)
+        {
+            return BadRequest(new { Message = ex.Message });
+        }
     }
 
     [HttpPut("{promotionId:int}")]
@@ -65,6 +69,10 @@ public class AdminPromotionsController : ControllerBase
             return Conflict(new { Message = ex.Message });
         }
         catch (ArgumentException ex)
+        {
+            return BadRequest(new { Message = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
         {
             return BadRequest(new { Message = ex.Message });
         }

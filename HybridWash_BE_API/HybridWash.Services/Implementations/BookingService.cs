@@ -12,15 +12,18 @@ namespace HybridWash.Services.Implementations
         private readonly IBookingRepository _bookingRepo;
         private readonly IServiceRepository _serviceRepo;
         private readonly ITimeSlotRepository _timeSlotRepo;
+        private readonly IPromotionRepository _promotionRepo;
 
         public BookingService(
             IBookingRepository bookingRepo,
             IServiceRepository serviceRepo,
-            ITimeSlotRepository timeSlotRepo)
+            ITimeSlotRepository timeSlotRepo,
+            IPromotionRepository promotionRepo)
         {
             _bookingRepo = bookingRepo;
             _serviceRepo = serviceRepo;
             _timeSlotRepo = timeSlotRepo;
+            _promotionRepo = promotionRepo;
         }
 
         public async Task<BookingDto> CreateBookingAsync(CreateBookingDto dto)
@@ -103,6 +106,12 @@ namespace HybridWash.Services.Implementations
             if (duplicate)
                 throw new Exception("You already have a booking for this date and slot");
 
+            var (promotionId, finalPrice) = await ApplyPromotionAsync(
+                dto.PromotionId,
+                dto.ServiceId,
+                service.Price,
+                customer);
+
             // --- Tạo Booking ---
             var booking = new Booking
             {
@@ -115,9 +124,9 @@ namespace HybridWash.Services.Implementations
                 ServiceId = dto.ServiceId,
                 SlotId = dto.SlotId,
                 BookingDate = dto.BookingDate,
-                PromotionId = dto.PromotionId,
+                PromotionId = promotionId,
                 OriginalPrice = service.Price,
-                FinalPrice = service.Price,
+                FinalPrice = finalPrice,
                 Status = "Pending",
                 CreatedAt = DateTime.UtcNow
             };
@@ -144,6 +153,84 @@ namespace HybridWash.Services.Implementations
                 Status = booking.Status,
                 CreatedAt = booking.CreatedAt
             };
+        }
+
+        private async Task<(int? PromotionId, decimal FinalPrice)> ApplyPromotionAsync(
+            int? promotionId,
+            int serviceId,
+            decimal originalPrice,
+            Customer? customer)
+        {
+            if (!promotionId.HasValue)
+            {
+                return (null, originalPrice);
+            }
+
+            var promotion = await _promotionRepo.GetByIdAsync(promotionId.Value);
+            var now = DateTime.UtcNow;
+            if (promotion == null
+                || !promotion.IsActive
+                || (promotion.ValidFrom.HasValue && promotion.ValidFrom > now)
+                || (promotion.ValidTo.HasValue && promotion.ValidTo < now))
+            {
+                throw new Exception("Promotion not found, inactive or expired");
+            }
+
+            var requiredTier = promotion.TargetTier ?? "All";
+            if (customer == null && !requiredTier.Equals("All", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new Exception("Guest can only use promotions for all tiers");
+            }
+
+            if (customer != null
+                && !BenefitRules.IsTierEligible(customer.CurrentTier, requiredTier))
+            {
+                throw new Exception("Your tier is not eligible for this promotion");
+            }
+
+            var promoType = BenefitRules.NormalizeType(promotion.PromoType ?? string.Empty);
+            if (promoType == "FreeWash")
+            {
+                if (promotion.ServiceId != serviceId)
+                {
+                    throw new Exception("This free-wash promotion is not valid for the selected service");
+                }
+
+                return (promotion.PromotionId, 0m);
+            }
+
+            if (promoType == "AddOn")
+            {
+                if (!promotion.ServiceId.HasValue)
+                {
+                    throw new Exception("Add-on promotion configuration is incomplete");
+                }
+
+                return (promotion.PromotionId, originalPrice);
+            }
+
+            if (promotion.ServiceId.HasValue && promotion.ServiceId != serviceId)
+            {
+                throw new Exception("This discount promotion is not valid for the selected service");
+            }
+
+            if (!promotion.DiscountValue.HasValue || string.IsNullOrWhiteSpace(promotion.DiscountType))
+            {
+                throw new Exception("Discount promotion configuration is incomplete");
+            }
+
+            var discountType = BenefitRules.NormalizeDiscountType(promotion.DiscountType);
+            var discount = discountType == "Fixed"
+                ? promotion.DiscountValue.Value
+                : originalPrice * promotion.DiscountValue.Value / 100m;
+
+            if (discountType == "Percent" && promotion.MaxDiscount.HasValue)
+            {
+                discount = Math.Min(discount, promotion.MaxDiscount.Value);
+            }
+
+            var finalPrice = Math.Max(0m, originalPrice - discount);
+            return (promotion.PromotionId, decimal.Round(finalPrice, 2));
         }
 
         // ========== GET BY CUSTOMER ==========
