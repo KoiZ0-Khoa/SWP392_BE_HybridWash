@@ -9,7 +9,12 @@
     <ProjectReference Include="..\HybridWash.Repositories\HybridWash.Repositories.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="AWSSDK.S3" Version="4.0.102.1" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
+    <PackageReference Include="MailKit" Version="4.17.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.10" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 </Project>

@@ -8,10 +8,14 @@ namespace HybridWash.Services.Implementations
     public class StaffService : IStaffService
     {
         private readonly IStaffRepository _staffRepository;
+        private readonly IAwsS3Service _awsS3Service;
+        private readonly Microsoft.Extensions.Configuration.IConfiguration _configuration;
 
-        public StaffService(IStaffRepository staffRepository)
+        public StaffService(IStaffRepository staffRepository, IAwsS3Service awsS3Service, Microsoft.Extensions.Configuration.IConfiguration configuration)
         {
             _staffRepository = staffRepository;
+            _awsS3Service = awsS3Service;
+            _configuration = configuration;
         }
 
         public async Task<IEnumerable<BookingResponseDTO>> GetTodayBookingsAsync()
@@ -76,7 +80,7 @@ namespace HybridWash.Services.Implementations
             return true;
         }
 
-        public async Task<string> CheckInAsync(BookingIdRequestDTO request)
+        public async Task<string> CheckInAsync(CheckInRequestDTO request)
         {
             var booking = await _staffRepository.GetBookingByIdAsync(request.BookingId);
             if (booking == null)
@@ -119,6 +123,15 @@ namespace HybridWash.Services.Implementations
                 }
             }
 
+            // Upload images to S3
+            var bucketName = _configuration["AWS:BucketName"] ?? "hybridwash-images";
+            var image1Url = await _awsS3Service.UploadFileAsync(request.IncidentImage1, bucketName, "incident-images");
+            var image2Url = await _awsS3Service.UploadFileAsync(request.IncidentImage2, bucketName, "incident-images");
+
+            booking.IncidentImage1 = image1Url;
+            booking.IncidentImage2 = image2Url;
+            booking.StaffNote = request.StaffNote;
+
             booking.Status = "Washing";
             booking.ActualWashTime = DateTime.UtcNow;
             await _staffRepository.UpdateBookingAsync(booking);
@@ -135,45 +148,17 @@ namespace HybridWash.Services.Implementations
                 throw new Exception("Booking không tồn tại.");
             }
 
-            // Lưu 2 ảnh hiện trạng xe (Incident Images)
-            booking.IncidentImage1 = request.IncidentImage1;
-            booking.IncidentImage2 = request.IncidentImage2;
-
             var receipt = new ParkingReceipt
             {
                 BookingId = request.BookingId,
                 IssueStaffId = staffId,
                 Status = "Issued",
                 IssuedAt = DateTime.UtcNow,
-                IsCustomerLeaving = request.IsCustomerLeaving,
-                CustomerSignature = request.CustomerSignature
+                IsCustomerLeaving = request.IsCustomerLeaving
             };
 
             await _staffRepository.AddParkingReceiptAsync(receipt);
             await _staffRepository.UpdateBookingAsync(booking);
-            await _staffRepository.SaveChangesAsync();
-
-            return true;
-        }
-
-        public async Task<bool> VerifyReceiptAsync(VerifyReceiptRequestDTO request, int staffId)
-        {
-            var receipt = await _staffRepository.GetParkingReceiptByBookingIdAsync(request.BookingId);
-            if (receipt == null)
-            {
-                throw new Exception("Không tìm thấy Biên bản gửi xe cho Booking này.");
-            }
-
-            if (receipt.Status == "Verified")
-            {
-                throw new Exception("Biên bản này đã được xác nhận (Verified) trước đó.");
-            }
-
-            receipt.Status = "Verified";
-            receipt.VerifyStaffId = staffId;
-            receipt.VerifiedAt = DateTime.UtcNow;
-
-            await _staffRepository.UpdateParkingReceiptAsync(receipt);
             await _staffRepository.SaveChangesAsync();
 
             return true;
@@ -192,12 +177,6 @@ namespace HybridWash.Services.Implementations
             if (booking.Status == "Pending" || booking.Status == "Confirmed")
             {
                 throw new Exception($"Lỗi: Xe mang biển số {licensePlate} chưa check-in! Bạn không thể check-out xe chưa check-in.");
-            }
-
-            var receipt = await _staffRepository.GetParkingReceiptByBookingIdAsync(booking.BookingId);
-            if (receipt != null && receipt.Status != "Verified")
-            {
-                throw new Exception($"Biên bản gửi xe chưa được xác nhận (Verify). Vui lòng xác nhận trước khi giao xe (Check-out) cho biển số {licensePlate}.");
             }
 
             booking.Status = "CheckedOut";

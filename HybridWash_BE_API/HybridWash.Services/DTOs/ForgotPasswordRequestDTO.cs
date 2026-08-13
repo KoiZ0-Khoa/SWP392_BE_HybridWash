@@ -2,6 +2,6 @@ namespace HybridWash.Services.DTOs
 {
     public class ForgotPasswordRequestDTO
     {
-        public string PhoneNumber { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
     }
 }

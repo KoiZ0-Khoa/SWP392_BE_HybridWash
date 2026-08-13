@@ -30,6 +30,16 @@ public class AuthRepository : IAuthRepository
         return _context.Customers.AnyAsync(customer => customer.PhoneNumber == phoneNumber);
     }
 
+    public Task<Customer?> GetCustomerByEmailAsync(string email)
+    {
+        return _context.Customers.FirstOrDefaultAsync(customer => customer.Email == email);
+    }
+
+    public Task<bool> CustomerEmailExistsAsync(string email)
+    {
+        return _context.Customers.AnyAsync(customer => customer.Email == email);
+    }
+
     public Task<bool> LicensePlateExistsAsync(string licensePlate)
     {
         return _context.Vehicles.AnyAsync(v => v.LicensePlate == licensePlate);

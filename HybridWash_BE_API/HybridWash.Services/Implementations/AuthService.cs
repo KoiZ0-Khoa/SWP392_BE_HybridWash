@@ -13,12 +13,14 @@ namespace HybridWash.Services.Implementations
         private readonly IAuthRepository _authRepository;
         private readonly ITokenGenerator _tokenGenerator;
         private readonly IMemoryCache _memoryCache;
+        private readonly IEmailService _emailService;
 
-        public AuthService(IAuthRepository authRepository, ITokenGenerator tokenGenerator, IMemoryCache memoryCache)
+        public AuthService(IAuthRepository authRepository, ITokenGenerator tokenGenerator, IMemoryCache memoryCache, IEmailService emailService)
         {
             _authRepository = authRepository;
             _tokenGenerator = tokenGenerator;
             _memoryCache = memoryCache;
+            _emailService = emailService;
         }
 
         public async Task<AuthResponseDTO> LoginAsync(LoginRequestDTO request)
@@ -74,6 +76,12 @@ namespace HybridWash.Services.Implementations
                 throw new Exception("Phone number is already registered.");
             }
 
+            var existingEmail = await _authRepository.CustomerEmailExistsAsync(request.Email);
+            if (existingEmail)
+            {
+                throw new Exception("Email is already registered.");
+            }
+
             var existingLicensePlate = await _authRepository.LicensePlateExistsAsync(request.LicensePlate);
             if (existingLicensePlate)
             {
@@ -84,6 +92,7 @@ namespace HybridWash.Services.Implementations
             {
                 FullName = request.FullName,
                 PhoneNumber = request.PhoneNumber,
+                Email = request.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
                 CurrentTier = "Member",
                 CreatedAt = DateTime.UtcNow,
@@ -139,27 +148,30 @@ namespace HybridWash.Services.Implementations
 
         public async Task<string> ForgotPasswordAsync(ForgotPasswordRequestDTO request)
         {
-            var customer = await _authRepository.GetCustomerByPhoneNumberAsync(request.PhoneNumber);
-            var staff = await _authRepository.GetStaffByPhoneNumberAsync(request.PhoneNumber);
+            var customer = await _authRepository.GetCustomerByEmailAsync(request.Email);
 
-            if (customer == null && staff == null)
+            if (customer == null)
             {
-                throw new Exception("Số điện thoại không tồn tại trong hệ thống.");
+                throw new Exception("Email không tồn tại trong hệ thống.");
             }
 
             // Generate 6-digit OTP
             var otp = new Random().Next(100000, 999999).ToString();
 
             // Save to memory cache with 5 minutes expiration
-            _memoryCache.Set($"OTP_{request.PhoneNumber}", otp, TimeSpan.FromMinutes(5));
+            _memoryCache.Set($"OTP_{request.Email}", otp, TimeSpan.FromMinutes(5));
 
-            // In real app, we would send SMS here. For now, just return it.
-            return otp;
+            // Send Email
+            string subject = "Mã xác nhận khôi phục mật khẩu";
+            string body = $"Mã OTP của bạn là: <strong>{otp}</strong>. Mã này sẽ hết hạn trong 5 phút.";
+            await _emailService.SendEmailAsync(request.Email, subject, body);
+
+            return "Mã OTP đã được gửi đến email của bạn.";
         }
 
         public async Task<bool> ResetPasswordAsync(ResetPasswordRequestDTO request)
         {
-            if (!_memoryCache.TryGetValue($"OTP_{request.PhoneNumber}", out string? cachedOtp))
+            if (!_memoryCache.TryGetValue($"OTP_{request.Email}", out string? cachedOtp))
             {
                 throw new Exception("Mã OTP đã hết hạn hoặc không tồn tại.");
             }
@@ -171,27 +183,18 @@ namespace HybridWash.Services.Implementations
 
             var newPasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
 
-            var staff = await _authRepository.GetStaffByPhoneNumberAsync(request.PhoneNumber);
-            if (staff != null)
+            var customer = await _authRepository.GetCustomerByEmailAsync(request.Email);
+            if (customer != null)
             {
-                staff.PasswordHash = newPasswordHash;
-                await _authRepository.UpdateStaffAsync(staff);
+                customer.PasswordHash = newPasswordHash;
+                await _authRepository.UpdateCustomerAsync(customer);
             }
             else
             {
-                var customer = await _authRepository.GetCustomerByPhoneNumberAsync(request.PhoneNumber);
-                if (customer != null)
-                {
-                    customer.PasswordHash = newPasswordHash;
-                    await _authRepository.UpdateCustomerAsync(customer);
-                }
-                else
-                {
-                    throw new Exception("Số điện thoại không tồn tại trong hệ thống.");
-                }
+                throw new Exception("Email không tồn tại trong hệ thống.");
             }
 
-            _memoryCache.Remove($"OTP_{request.PhoneNumber}");
+            _memoryCache.Remove($"OTP_{request.Email}");
             return true;
         }
     }

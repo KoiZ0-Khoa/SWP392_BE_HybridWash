@@ -66,7 +66,7 @@ namespace HybridWash_BE_API.Controllers
         }
 
         [HttpPost("check-in")]
-        public async Task<IActionResult> CheckIn([FromBody] BookingIdRequestDTO request)
+        public async Task<IActionResult> CheckIn([FromForm] CheckInRequestDTO request)
         {
             try
             {
@@ -92,26 +92,6 @@ namespace HybridWash_BE_API.Controllers
 
                 var result = await _staffService.IssueReceiptAsync(request, staffId);
                 return Ok(new { Success = result, Message = "Phát hành biên bản gửi xe thành công." });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { Message = ex.Message });
-            }
-        }
-
-        [HttpPost("verify-receipt")]
-        public async Task<IActionResult> VerifyReceipt([FromBody] VerifyReceiptRequestDTO request)
-        {
-            try
-            {
-                var staffIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (string.IsNullOrEmpty(staffIdStr) || !int.TryParse(staffIdStr, out int staffId))
-                {
-                    return Unauthorized(new { Message = "Staff ID không hợp lệ." });
-                }
-
-                var result = await _staffService.VerifyReceiptAsync(request, staffId);
-                return Ok(new { Success = result, Message = "Xác nhận biên bản gửi xe thành công." });
             }
             catch (Exception ex)
             {

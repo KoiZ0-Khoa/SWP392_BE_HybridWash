@@ -1,3 +1,4 @@
+using Amazon.S3;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -56,6 +57,12 @@ namespace HybridWash_BE_API
 
             builder.Services.AddScoped<IBookingRepository, BookingRepository>();
             builder.Services.AddScoped<IBookingService, BookingService>();
+            builder.Services.AddScoped<IEmailService, EmailService>();
+
+            // AWS S3
+            builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+            builder.Services.AddAWSService<IAmazonS3>();
+            builder.Services.AddScoped<IAwsS3Service, AwsS3Service>();
 
             builder.Services.AddMemoryCache();
 

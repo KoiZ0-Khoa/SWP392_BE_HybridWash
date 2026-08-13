@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace HybridWash.Entities.Models;
@@ -10,6 +10,8 @@ public partial class Customer
     public string PhoneNumber { get; set; } = null!;
 
     public string PasswordHash { get; set; } = null!;
+
+    public string Email { get; set; } = null!;
 
     public string FullName { get; set; } = null!;
 

@@ -157,6 +157,8 @@ public partial class AutowashContext : DbContext
 
             entity.HasIndex(e => e.PhoneNumber, "UQ__Customer__85FB4E3872752CA2").IsUnique();
 
+            entity.HasIndex(e => e.Email, "UQ__Customer__Email").IsUnique();
+
             entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -167,6 +169,9 @@ public partial class AutowashContext : DbContext
                 .IsUnicode(false)
                 .HasDefaultValue("Member");
             entity.Property(e => e.FullName).HasMaxLength(100);
+            entity.Property(e => e.Email)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.PhoneNumber)
                 .HasMaxLength(15)
                 .IsUnicode(false);
