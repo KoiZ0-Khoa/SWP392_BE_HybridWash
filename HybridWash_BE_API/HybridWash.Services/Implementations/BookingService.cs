@@ -552,6 +552,8 @@ namespace HybridWash.Services.Implementations
             ActualWashTime = b.ActualWashTime,
             StaffNote = b.StaffNote,
             QrCode = b.QrCode,
+            IncidentImage1 = b.IncidentImage1,
+            IncidentImage2 = b.IncidentImage2,
             CreatedAt = b.CreatedAt
         };
 
