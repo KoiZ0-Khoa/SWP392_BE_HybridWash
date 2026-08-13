@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace HybridWash.Entities.Models;
@@ -42,6 +42,8 @@ public partial class Booking
     public string? StaffNote { get; set; }
 
     public string? Status { get; set; }
+
+    public string? QrCode { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 

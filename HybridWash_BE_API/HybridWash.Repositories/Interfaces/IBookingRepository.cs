@@ -17,6 +17,8 @@ namespace HybridWash.Repositories.Interfaces
             DateTime? usedAt = null);
         Task<Booking?> GetBookingByIdWithDetailsAsync(int bookingId);
         Task<List<Booking>> GetBookingsByPhoneAsync(string phone);
+        Task<List<Booking>> GetBookingsByLicensePlateAsync(string licensePlate);
+        Task<Booking?> GetBookingByQrCodeAsync(string qrCode);
         IQueryable<Booking> GetBookingsQueryable();
         // Save
         Task SaveChangesAsync();

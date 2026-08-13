@@ -75,6 +75,12 @@ public partial class AutowashContext : DbContext
                 .HasMaxLength(20)
                 .IsUnicode(false)
                 .HasDefaultValue("Pending");
+            entity.Property(e => e.QrCode)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.HasIndex(e => e.QrCode)
+                .IsUnique()
+                .HasFilter("[QrCode] IS NOT NULL");
             entity.Property(e => e.VehicleId).HasColumnName("VehicleID");
 
             entity.HasOne(d => d.Customer).WithMany(p => p.Bookings)

@@ -139,6 +139,37 @@ namespace HybridWash.Repositories.Implementations
                 .ToListAsync();
         }
 
+        public async Task<List<Booking>> GetBookingsByLicensePlateAsync(string licensePlate)
+        {
+            return await _context.Bookings
+                .Include(b => b.Customer)
+                .Include(b => b.Vehicle)
+                .Include(b => b.Service)
+                .Include(b => b.Slot)
+                .Include(b => b.BookingAddOns)
+                    .ThenInclude(addOn => addOn.Service)
+                .Include(b => b.RewardRedemptions)
+                .Where(b => (b.Vehicle != null && b.Vehicle.LicensePlate == licensePlate)
+                         || b.GuestLicensePlate == licensePlate)
+                .OrderByDescending(b => b.BookingDate)
+                .ToListAsync();
+        }
+
+        public async Task<Booking?> GetBookingByQrCodeAsync(string qrCode)
+        {
+            return await _context.Bookings
+                .Include(b => b.Customer)
+                .Include(b => b.Vehicle)
+                .Include(b => b.Service)
+                .Include(b => b.Slot)
+                .Include(b => b.Staff)
+                .Include(b => b.Promotion)
+                .Include(b => b.BookingAddOns)
+                    .ThenInclude(addOn => addOn.Service)
+                .Include(b => b.RewardRedemptions)
+                .FirstOrDefaultAsync(b => b.QrCode == qrCode);
+        }
+
         public IQueryable<Booking> GetBookingsQueryable()
         {
             return _context.Bookings

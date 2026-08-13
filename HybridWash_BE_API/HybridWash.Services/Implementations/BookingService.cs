@@ -130,6 +130,7 @@ namespace HybridWash.Services.Implementations
                 OriginalPrice = service.Price,
                 FinalPrice = benefit.FinalPrice,
                 Status = "Pending",
+                QrCode = Guid.NewGuid().ToString("N"),
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -173,6 +174,7 @@ namespace HybridWash.Services.Implementations
                 PromotionId = booking.PromotionId,
                 RedemptionId = benefit.RedemptionId,
                 AddOns = MapAddOns(booking.BookingAddOns),
+                QrCode = booking.QrCode,
                 Status = booking.Status,
                 CreatedAt = booking.CreatedAt
             };
@@ -362,10 +364,32 @@ namespace HybridWash.Services.Implementations
             return bookings.Select(MapToBookingDto).ToList();
         }
 
+        // ========== GET BY LICENSE PLATE ==========
+        public async Task<List<BookingDto>> GetBookingsByLicensePlateAsync(string licensePlate)
+        {
+            if (string.IsNullOrWhiteSpace(licensePlate))
+                throw new ArgumentException("License plate is required");
+
+            var bookings = await _bookingRepo.GetBookingsByLicensePlateAsync(licensePlate.Trim());
+            return bookings.Select(MapToBookingDto).ToList();
+        }
+
         // ========== GET DETAIL ==========
         public async Task<BookingDetailDto> GetBookingByIdAsync(int bookingId)
         {
             var booking = await _bookingRepo.GetBookingByIdWithDetailsAsync(bookingId);
+            if (booking == null)
+                throw new Exception("Booking not found");
+            return MapToBookingDetailDto(booking);
+        }
+
+        // ========== GET BY QR CODE ==========
+        public async Task<BookingDetailDto> GetBookingByQrCodeAsync(string qrCode)
+        {
+            if (string.IsNullOrWhiteSpace(qrCode))
+                throw new ArgumentException("QR code is required");
+
+            var booking = await _bookingRepo.GetBookingByQrCodeAsync(qrCode.Trim());
             if (booking == null)
                 throw new Exception("Booking not found");
             return MapToBookingDetailDto(booking);
@@ -494,6 +518,7 @@ namespace HybridWash.Services.Implementations
             PromotionId = b.PromotionId,
             RedemptionId = b.RewardRedemptions.FirstOrDefault()?.RedemptionId,
             AddOns = MapAddOns(b.BookingAddOns),
+            QrCode = b.QrCode,
             Status = b.Status,
             CreatedAt = b.CreatedAt
         };
@@ -526,6 +551,7 @@ namespace HybridWash.Services.Implementations
             StaffName = b.Staff?.FullName,
             ActualWashTime = b.ActualWashTime,
             StaffNote = b.StaffNote,
+            QrCode = b.QrCode,
             CreatedAt = b.CreatedAt
         };
 

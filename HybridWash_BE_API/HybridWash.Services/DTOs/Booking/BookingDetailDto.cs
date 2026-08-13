@@ -39,6 +39,7 @@ namespace HybridWash.Services.DTOs.Booking
         public string? StaffName { get; set; }
         public DateTime? ActualWashTime { get; set; }
         public string? StaffNote { get; set; }
+        public string? QrCode { get; set; }
         public DateTime? CreatedAt { get; set; }
     }
 }
