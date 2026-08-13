@@ -14,19 +14,22 @@ namespace HybridWash.Services.Implementations
         private readonly ITimeSlotRepository _timeSlotRepo;
         private readonly IPromotionRepository _promotionRepo;
         private readonly IRewardRepository _rewardRepo;
+        private readonly ILoyaltyService _loyaltyService;
 
         public BookingService(
             IBookingRepository bookingRepo,
             IServiceRepository serviceRepo,
             ITimeSlotRepository timeSlotRepo,
             IPromotionRepository promotionRepo,
-            IRewardRepository rewardRepo)
+            IRewardRepository rewardRepo,
+            ILoyaltyService loyaltyService)
         {
             _bookingRepo = bookingRepo;
             _serviceRepo = serviceRepo;
             _timeSlotRepo = timeSlotRepo;
             _promotionRepo = promotionRepo;
             _rewardRepo = rewardRepo;
+            _loyaltyService = loyaltyService;
         }
 
         public async Task<BookingDto> CreateBookingAsync(CreateBookingDto dto)
@@ -127,6 +130,7 @@ namespace HybridWash.Services.Implementations
                 OriginalPrice = service.Price,
                 FinalPrice = benefit.FinalPrice,
                 Status = "Pending",
+                QrCode = Guid.NewGuid().ToString("N"),
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -170,6 +174,7 @@ namespace HybridWash.Services.Implementations
                 PromotionId = booking.PromotionId,
                 RedemptionId = benefit.RedemptionId,
                 AddOns = MapAddOns(booking.BookingAddOns),
+                QrCode = booking.QrCode,
                 Status = booking.Status,
                 CreatedAt = booking.CreatedAt
             };
@@ -240,6 +245,14 @@ namespace HybridWash.Services.Implementations
             if (promotionType == "AddOn")
             {
                 var addOnService = await GetActiveBenefitServiceAsync(promotion.ServiceId);
+
+                // If the gifted service is already the main service, make the
+                // main service free instead of displaying the same service twice.
+                if (addOnService.ServiceId == selectedServiceId)
+                {
+                    return new BenefitApplication(promotionId, null, 0m, null);
+                }
+
                 return new BenefitApplication(promotionId, null, originalPrice, addOnService);
             }
 
@@ -303,6 +316,14 @@ namespace HybridWash.Services.Implementations
             if (rewardType == "AddOn")
             {
                 var addOnService = await GetActiveBenefitServiceAsync(reward.ServiceId);
+
+                // If the gifted service is already the main service, make the
+                // main service free instead of displaying the same service twice.
+                if (addOnService.ServiceId == selectedServiceId)
+                {
+                    return new BenefitApplication(null, redemptionId, 0m, null);
+                }
+
                 return new BenefitApplication(null, redemptionId, originalPrice, addOnService);
             }
 
@@ -343,10 +364,32 @@ namespace HybridWash.Services.Implementations
             return bookings.Select(MapToBookingDto).ToList();
         }
 
+        // ========== GET BY LICENSE PLATE ==========
+        public async Task<List<BookingDto>> GetBookingsByLicensePlateAsync(string licensePlate)
+        {
+            if (string.IsNullOrWhiteSpace(licensePlate))
+                throw new ArgumentException("License plate is required");
+
+            var bookings = await _bookingRepo.GetBookingsByLicensePlateAsync(licensePlate.Trim());
+            return bookings.Select(MapToBookingDto).ToList();
+        }
+
         // ========== GET DETAIL ==========
         public async Task<BookingDetailDto> GetBookingByIdAsync(int bookingId)
         {
             var booking = await _bookingRepo.GetBookingByIdWithDetailsAsync(bookingId);
+            if (booking == null)
+                throw new Exception("Booking not found");
+            return MapToBookingDetailDto(booking);
+        }
+
+        // ========== GET BY QR CODE ==========
+        public async Task<BookingDetailDto> GetBookingByQrCodeAsync(string qrCode)
+        {
+            if (string.IsNullOrWhiteSpace(qrCode))
+                throw new ArgumentException("QR code is required");
+
+            var booking = await _bookingRepo.GetBookingByQrCodeAsync(qrCode.Trim());
             if (booking == null)
                 throw new Exception("Booking not found");
             return MapToBookingDetailDto(booking);
@@ -386,16 +429,24 @@ namespace HybridWash.Services.Implementations
                 throw new ArgumentException(
                     $"Status must be one of: {string.Join(", ", allowedStatuses)}");
 
-            booking.Status = normalizedStatus;
             if (normalizedStatus is "Completed" or "CheckedOut")
             {
+                await _loyaltyService.CompleteBookingAndEarnPointsAsync(
+                    bookingId,
+                    DateTime.UtcNow);
+
+                booking.Status = normalizedStatus;
                 foreach (var addOn in booking.BookingAddOns)
                     addOn.Status = "Completed";
             }
-            else if (normalizedStatus is "Cancelled" or "NoShow")
+            else
             {
-                foreach (var addOn in booking.BookingAddOns)
-                    addOn.Status = "Cancelled";
+                booking.Status = normalizedStatus;
+                if (normalizedStatus is "Cancelled" or "NoShow")
+                {
+                    foreach (var addOn in booking.BookingAddOns)
+                        addOn.Status = "Cancelled";
+                }
             }
             await _bookingRepo.SaveChangesAsync();
 
@@ -467,6 +518,7 @@ namespace HybridWash.Services.Implementations
             PromotionId = b.PromotionId,
             RedemptionId = b.RewardRedemptions.FirstOrDefault()?.RedemptionId,
             AddOns = MapAddOns(b.BookingAddOns),
+            QrCode = b.QrCode,
             Status = b.Status,
             CreatedAt = b.CreatedAt
         };
@@ -499,6 +551,7 @@ namespace HybridWash.Services.Implementations
             StaffName = b.Staff?.FullName,
             ActualWashTime = b.ActualWashTime,
             StaffNote = b.StaffNote,
+            QrCode = b.QrCode,
             CreatedAt = b.CreatedAt
         };
 

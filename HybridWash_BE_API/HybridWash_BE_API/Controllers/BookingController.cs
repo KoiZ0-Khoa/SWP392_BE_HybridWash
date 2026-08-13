@@ -69,6 +69,39 @@ namespace HybridWash_BE_API.Controllers
             }
         }
 
+        [HttpGet("search-by-plate")]
+        [Authorize]
+        public async Task<IActionResult> GetBookingsByLicensePlate([FromQuery] string licensePlate)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(licensePlate))
+                    return BadRequest(new { Message = "License plate is required" });
+
+                var bookings = await _bookingService.GetBookingsByLicensePlateAsync(licensePlate);
+                return Ok(new { Success = true, Data = bookings });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+
+        [HttpGet("checkin/{qrCode}")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> GetBookingByQrCode(string qrCode)
+        {
+            try
+            {
+                var booking = await _bookingService.GetBookingByQrCodeAsync(qrCode);
+                return Ok(new { Success = true, Data = booking });
+            }
+            catch (Exception ex)
+            {
+                return NotFound(new { Message = ex.Message });
+            }
+        }
+
         [HttpPut("{bookingId}/cancel")]
         [Authorize]
         public async Task<IActionResult> CancelBooking(int bookingId)

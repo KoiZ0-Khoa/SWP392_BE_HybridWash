@@ -4,6 +4,7 @@ using HybridWash.Repositories.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HybridWash.Repositories.Migrations
 {
     [DbContext(typeof(AutowashContext))]
-    partial class AutowashContextModelSnapshot : ModelSnapshot
+    [Migration("20260813100342_AddBookingQrCode")]
+    partial class AddBookingQrCode
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -226,12 +229,6 @@ namespace HybridWash.Repositories.Migrations
                         .HasColumnType("varchar(20)")
                         .HasDefaultValue("Member");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)");
-
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -256,9 +253,6 @@ namespace HybridWash.Repositories.Migrations
                         .HasName("PK__Customer__A4AE64B80ED0B1AD");
 
                     b.HasIndex(new[] { "PhoneNumber" }, "UQ__Customer__85FB4E3872752CA2")
-                        .IsUnique();
-
-                    b.HasIndex(new[] { "Email" }, "UQ__Customer__Email")
                         .IsUnique();
 
                     b.ToTable("Customers");

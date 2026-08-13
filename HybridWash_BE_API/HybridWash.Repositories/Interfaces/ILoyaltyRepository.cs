@@ -10,4 +10,8 @@ public interface ILoyaltyRepository
         int customerId,
         int page,
         int pageSize);
+    Task<int> CompleteBookingAndEarnPointsAsync(
+        int bookingId,
+        decimal vndPerPoint,
+        DateTime completedAt);
 }

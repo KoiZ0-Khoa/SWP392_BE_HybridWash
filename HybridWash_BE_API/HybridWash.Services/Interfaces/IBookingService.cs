@@ -7,7 +7,9 @@ namespace HybridWash.Services.Interfaces
     {
         Task<BookingDto> CreateBookingAsync(CreateBookingDto dto);
         Task<List<BookingDto>> GetBookingsByPhoneAsync(string phone);
+        Task<List<BookingDto>> GetBookingsByLicensePlateAsync(string licensePlate);
         Task<BookingDetailDto> GetBookingByIdAsync(int bookingId);
+        Task<BookingDetailDto> GetBookingByQrCodeAsync(string qrCode);
         Task CancelBookingAsync(int bookingId);
         Task<BookingDto> UpdateBookingStatusAsync(int bookingId, string status);
         Task<PagedResultDto<BookingDto>> GetAdminBookingsAsync(AdminBookingQueryDto query);

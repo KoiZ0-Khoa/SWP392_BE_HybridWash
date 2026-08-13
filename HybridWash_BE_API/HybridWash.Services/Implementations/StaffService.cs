@@ -10,12 +10,15 @@ namespace HybridWash.Services.Implementations
         private readonly IStaffRepository _staffRepository;
         private readonly IAwsS3Service _awsS3Service;
         private readonly Microsoft.Extensions.Configuration.IConfiguration _configuration;
+        private readonly ILoyaltyService _loyaltyService;
 
-        public StaffService(IStaffRepository staffRepository, IAwsS3Service awsS3Service, Microsoft.Extensions.Configuration.IConfiguration configuration)
+        public StaffService(IStaffRepository staffRepository, IAwsS3Service awsS3Service, ILoyaltyService loyaltyService, Microsoft.Extensions.Configuration.IConfiguration configuration)
         {
             _staffRepository = staffRepository;
             _awsS3Service = awsS3Service;
+            _loyalty_service = loyaltyService;
             _configuration = configuration;
+
         }
 
         public async Task<IEnumerable<BookingResponseDTO>> GetTodayBookingsAsync()
@@ -178,6 +181,16 @@ namespace HybridWash.Services.Implementations
             {
                 throw new Exception($"Lỗi: Xe mang biển số {licensePlate} chưa check-in! Bạn không thể check-out xe chưa check-in.");
             }
+
+            var receipt = await _staffRepository.GetParkingReceiptByBookingIdAsync(booking.BookingId);
+            if (receipt != null && receipt.Status != "Verified")
+            {
+                throw new Exception($"Biên bản gửi xe chưa được xác nhận (Verify). Vui lòng xác nhận trước khi giao xe (Check-out) cho biển số {licensePlate}.");
+            }
+
+            await _loyaltyService.CompleteBookingAndEarnPointsAsync(
+                booking.BookingId,
+                DateTime.UtcNow);
 
             booking.Status = "CheckedOut";
             foreach (var addOn in booking.BookingAddOns)
