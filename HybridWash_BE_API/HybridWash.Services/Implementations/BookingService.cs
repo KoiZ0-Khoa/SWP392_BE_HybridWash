@@ -240,6 +240,14 @@ namespace HybridWash.Services.Implementations
             if (promotionType == "AddOn")
             {
                 var addOnService = await GetActiveBenefitServiceAsync(promotion.ServiceId);
+
+                // If the gifted service is already the main service, make the
+                // main service free instead of displaying the same service twice.
+                if (addOnService.ServiceId == selectedServiceId)
+                {
+                    return new BenefitApplication(promotionId, null, 0m, null);
+                }
+
                 return new BenefitApplication(promotionId, null, originalPrice, addOnService);
             }
 
@@ -303,6 +311,14 @@ namespace HybridWash.Services.Implementations
             if (rewardType == "AddOn")
             {
                 var addOnService = await GetActiveBenefitServiceAsync(reward.ServiceId);
+
+                // If the gifted service is already the main service, make the
+                // main service free instead of displaying the same service twice.
+                if (addOnService.ServiceId == selectedServiceId)
+                {
+                    return new BenefitApplication(null, redemptionId, 0m, null);
+                }
+
                 return new BenefitApplication(null, redemptionId, originalPrice, addOnService);
             }
 
