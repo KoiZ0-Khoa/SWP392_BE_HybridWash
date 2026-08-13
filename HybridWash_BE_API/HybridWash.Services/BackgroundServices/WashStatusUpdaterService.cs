@@ -1,4 +1,5 @@
 using HybridWash.Repositories.Data;
+using HybridWash.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -44,11 +45,12 @@ namespace HybridWash.Services.BackgroundServices
             using (var scope = _serviceProvider.CreateScope())
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<AutowashContext>();
+                var loyaltyService = scope.ServiceProvider.GetRequiredService<ILoyaltyService>();
 
                 // Tìm các xe đang rửa (Washing)
                 var washingBookings = await dbContext.Bookings
-                    .Include(booking => booking.BookingAddOns)
                     .Where(b => b.Status == "Washing" && b.ActualWashTime.HasValue)
+                    .AsNoTracking()
                     .ToListAsync(stoppingToken);
 
                 var now = DateTime.UtcNow;
@@ -61,18 +63,15 @@ namespace HybridWash.Services.BackgroundServices
                     
                     if (now >= washEndTime)
                     {
-                        booking.Status = "Completed";
-                        foreach (var addOn in booking.BookingAddOns)
-                        {
-                            addOn.Status = "Completed";
-                        }
+                        await loyaltyService.CompleteBookingAndEarnPointsAsync(
+                            booking.BookingId,
+                            now);
                         updatedCount++;
                     }
                 }
 
                 if (updatedCount > 0)
                 {
-                    await dbContext.SaveChangesAsync(stoppingToken);
                     _logger.LogInformation($"Updated {updatedCount} bookings from 'Washing' to 'Completed'.");
                 }
             }

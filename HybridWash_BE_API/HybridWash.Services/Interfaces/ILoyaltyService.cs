@@ -6,4 +6,5 @@ public interface ILoyaltyService
 {
     Task<LoyaltySummaryDTO?> GetSummaryAsync(int customerId);
     Task<PointTransactionPageDTO> GetPointTransactionsAsync(int customerId, int page, int pageSize);
+    Task<int> CompleteBookingAndEarnPointsAsync(int bookingId, DateTime completedAt);
 }

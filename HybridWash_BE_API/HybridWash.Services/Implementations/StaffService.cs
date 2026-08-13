@@ -8,10 +8,14 @@ namespace HybridWash.Services.Implementations
     public class StaffService : IStaffService
     {
         private readonly IStaffRepository _staffRepository;
+        private readonly ILoyaltyService _loyaltyService;
 
-        public StaffService(IStaffRepository staffRepository)
+        public StaffService(
+            IStaffRepository staffRepository,
+            ILoyaltyService loyaltyService)
         {
             _staffRepository = staffRepository;
+            _loyaltyService = loyaltyService;
         }
 
         public async Task<IEnumerable<BookingResponseDTO>> GetTodayBookingsAsync()
@@ -199,6 +203,10 @@ namespace HybridWash.Services.Implementations
             {
                 throw new Exception($"Biên bản gửi xe chưa được xác nhận (Verify). Vui lòng xác nhận trước khi giao xe (Check-out) cho biển số {licensePlate}.");
             }
+
+            await _loyaltyService.CompleteBookingAndEarnPointsAsync(
+                booking.BookingId,
+                DateTime.UtcNow);
 
             booking.Status = "CheckedOut";
             foreach (var addOn in booking.BookingAddOns)

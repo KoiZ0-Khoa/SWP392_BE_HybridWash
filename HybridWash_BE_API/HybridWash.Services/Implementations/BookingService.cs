@@ -14,19 +14,22 @@ namespace HybridWash.Services.Implementations
         private readonly ITimeSlotRepository _timeSlotRepo;
         private readonly IPromotionRepository _promotionRepo;
         private readonly IRewardRepository _rewardRepo;
+        private readonly ILoyaltyService _loyaltyService;
 
         public BookingService(
             IBookingRepository bookingRepo,
             IServiceRepository serviceRepo,
             ITimeSlotRepository timeSlotRepo,
             IPromotionRepository promotionRepo,
-            IRewardRepository rewardRepo)
+            IRewardRepository rewardRepo,
+            ILoyaltyService loyaltyService)
         {
             _bookingRepo = bookingRepo;
             _serviceRepo = serviceRepo;
             _timeSlotRepo = timeSlotRepo;
             _promotionRepo = promotionRepo;
             _rewardRepo = rewardRepo;
+            _loyaltyService = loyaltyService;
         }
 
         public async Task<BookingDto> CreateBookingAsync(CreateBookingDto dto)
@@ -402,16 +405,24 @@ namespace HybridWash.Services.Implementations
                 throw new ArgumentException(
                     $"Status must be one of: {string.Join(", ", allowedStatuses)}");
 
-            booking.Status = normalizedStatus;
             if (normalizedStatus is "Completed" or "CheckedOut")
             {
+                await _loyaltyService.CompleteBookingAndEarnPointsAsync(
+                    bookingId,
+                    DateTime.UtcNow);
+
+                booking.Status = normalizedStatus;
                 foreach (var addOn in booking.BookingAddOns)
                     addOn.Status = "Completed";
             }
-            else if (normalizedStatus is "Cancelled" or "NoShow")
+            else
             {
-                foreach (var addOn in booking.BookingAddOns)
-                    addOn.Status = "Cancelled";
+                booking.Status = normalizedStatus;
+                if (normalizedStatus is "Cancelled" or "NoShow")
+                {
+                    foreach (var addOn in booking.BookingAddOns)
+                        addOn.Status = "Cancelled";
+                }
             }
             await _bookingRepo.SaveChangesAsync();
 

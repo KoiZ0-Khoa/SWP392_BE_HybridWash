@@ -1,16 +1,27 @@
 using HybridWash.Repositories.Interfaces;
 using HybridWash.Services.DTOs.Loyalty;
 using HybridWash.Services.Interfaces;
+using Microsoft.Extensions.Configuration;
 
 namespace HybridWash.Services.Implementations;
 
 public class LoyaltyService : ILoyaltyService
 {
     private readonly ILoyaltyRepository _loyaltyRepository;
+    private readonly decimal _vndPerPoint;
 
-    public LoyaltyService(ILoyaltyRepository loyaltyRepository)
+    public LoyaltyService(
+        ILoyaltyRepository loyaltyRepository,
+        IConfiguration configuration)
     {
         _loyaltyRepository = loyaltyRepository;
+
+        if (!decimal.TryParse(configuration["Loyalty:VndPerPoint"], out _vndPerPoint)
+            || _vndPerPoint <= 0)
+        {
+            throw new InvalidOperationException(
+                "Loyalty:VndPerPoint must be configured with a value greater than zero.");
+        }
     }
 
     public async Task<LoyaltySummaryDTO?> GetSummaryAsync(int customerId)
@@ -59,5 +70,13 @@ public class LoyaltyService : ILoyaltyService
             TotalCount = totalCount,
             TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
         };
+    }
+
+    public Task<int> CompleteBookingAndEarnPointsAsync(int bookingId, DateTime completedAt)
+    {
+        return _loyaltyRepository.CompleteBookingAndEarnPointsAsync(
+            bookingId,
+            _vndPerPoint,
+            completedAt);
     }
 }
