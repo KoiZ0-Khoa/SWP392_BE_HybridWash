@@ -16,7 +16,7 @@ namespace HybridWash.Services.Implementations
         {
             _staffRepository = staffRepository;
             _awsS3Service = awsS3Service;
-            _loyalty_service = loyaltyService;
+            _loyaltyService = loyaltyService;
             _configuration = configuration;
 
         }
@@ -182,11 +182,7 @@ namespace HybridWash.Services.Implementations
                 throw new Exception($"Lỗi: Xe mang biển số {licensePlate} chưa check-in! Bạn không thể check-out xe chưa check-in.");
             }
 
-            var receipt = await _staffRepository.GetParkingReceiptByBookingIdAsync(booking.BookingId);
-            if (receipt != null && receipt.Status != "Verified")
-            {
-                throw new Exception($"Biên bản gửi xe chưa được xác nhận (Verify). Vui lòng xác nhận trước khi giao xe (Check-out) cho biển số {licensePlate}.");
-            }
+
 
             await _loyaltyService.CompleteBookingAndEarnPointsAsync(
                 booking.BookingId,
