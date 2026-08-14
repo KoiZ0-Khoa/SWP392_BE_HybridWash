@@ -16,6 +16,7 @@ namespace HybridWash.Services.Implementations
         private readonly IRewardRepository _rewardRepo;
         private readonly ILoyaltyService _loyaltyService;
         private readonly ITierService _tierService;
+        private readonly IPlateOcrService _plateOcrService;
 
         public BookingService(
             IBookingRepository bookingRepo,
@@ -24,7 +25,8 @@ namespace HybridWash.Services.Implementations
             IPromotionRepository promotionRepo,
             IRewardRepository rewardRepo,
             ILoyaltyService loyaltyService,
-            ITierService tierService)
+            ITierService tierService,
+            IPlateOcrService plateOcrService)
         {
             _bookingRepo = bookingRepo;
             _serviceRepo = serviceRepo;
@@ -33,6 +35,7 @@ namespace HybridWash.Services.Implementations
             _rewardRepo = rewardRepo;
             _loyaltyService = loyaltyService;
             _tierService = tierService;
+            _plateOcrService = plateOcrService;
         }
 
         public async Task<BookingDto> CreateBookingAsync(CreateBookingDto dto)
@@ -594,6 +597,25 @@ namespace HybridWash.Services.Implementations
                     Status = addOn.Status
                 };
             }).ToList();
+        }
+
+        // ========== SCAN PLATE ==========
+        public async Task<PlateRecognitionResultDto> ScanPlateAsync(Stream imageStream)
+        {
+            var plate = await _plateOcrService.RecognizePlateAsync(imageStream);
+
+            var result = new PlateRecognitionResultDto
+            {
+                DetectedPlate = plate
+            };
+
+            if (!string.IsNullOrWhiteSpace(plate))
+            {
+                var bookings = await _bookingRepo.GetBookingsByLicensePlateAsync(plate);
+                result.Bookings = bookings.Select(MapToBookingDto).ToList();
+            }
+
+            return result;
         }
 
         private sealed record BenefitApplication(
