@@ -13,12 +13,6 @@ namespace HybridWash.Services.Implementations
         private readonly string _apiKey;
         private readonly ILogger<GoogleVisionPlateOcrService> _logger;
 
-        // Regex cho biển số xe Việt Nam
-        // Ví dụ: 59A-123.45, 51G-888.88, 29A1-234.56, 92C1-56789
-        private static readonly Regex VietPlateRegex = new(
-            @"\d{2}[A-Z]\d?[\s\-\.]*\d{3,5}[\s\-\.]*\d{2}",
-            RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
         public GoogleVisionPlateOcrService(
             HttpClient httpClient,
             IConfiguration configuration,
@@ -72,7 +66,7 @@ namespace HybridWash.Services.Implementations
                 var errorBody = await response.Content.ReadAsStringAsync();
                 _logger.LogWarning("Google Vision API returned {StatusCode}: {Body}",
                     response.StatusCode, errorBody);
-                return null;
+                throw new Exception($"Google Vision API Error: {response.StatusCode} - {errorBody}");
             }
 
             // 3. Parse response
@@ -109,50 +103,19 @@ namespace HybridWash.Services.Implementations
             return plate;
         }
 
-        /// <summary>
-        /// Tìm chuỗi biển số xe Việt Nam trong đoạn text OCR trả về.
-        /// Chuẩn hóa bằng cách loại bỏ dấu chấm, gạch, khoảng trắng thừa.
-        /// </summary>
+
         private static string? ExtractPlate(string ocrText)
         {
-            // Thay newline bằng space để match dễ hơn
-            var normalized = ocrText.Replace("\n", " ").Replace("\r", " ");
-
-            var match = VietPlateRegex.Match(normalized);
-            if (!match.Success)
+            if (string.IsNullOrWhiteSpace(ocrText))
                 return null;
 
-            // Chuẩn hóa: bỏ dấu chấm, khoảng trắng, chỉ giữ gạch ngang
-            var plate = match.Value
-                .Replace(".", "")
-                .Replace(" ", "")
-                .ToUpper();
+            // Xóa tất cả các ký tự không phải chữ cái và số (bao gồm cả dấu chấm, gạch, khoảng trắng, ký tự lạ OCR đọc nhầm)
+            var cleaned = Regex.Replace(ocrText, @"[^a-zA-Z0-9]", "").ToUpper();
 
-            // Đảm bảo có đúng 1 dấu gạch ngang ở vị trí đúng
-            // Ví dụ: 59A12345 → 59A-12345
-            if (!plate.Contains('-'))
-            {
-                // Tìm vị trí chuyển từ chữ sang số (sau phần prefix)
-                var insertPos = 0;
-                for (int i = 2; i < plate.Length; i++)
-                {
-                    if (char.IsLetter(plate[i - 1]) && char.IsDigit(plate[i]) && i > 2)
-                    {
-                        insertPos = i;
-                        break;
-                    }
-                    // Handle case: 59A1-xxxxx (chữ + 1 số rồi mới tới phần chính)
-                    if (i >= 3 && char.IsDigit(plate[i]) && char.IsDigit(plate[i + 1 < plate.Length ? i + 1 : i]))
-                    {
-                        insertPos = i;
-                        break;
-                    }
-                }
-                if (insertPos > 0)
-                    plate = plate.Insert(insertPos, "-");
-            }
+            if (cleaned.Length < 4)
+                return null; // Chuỗi quá ngắn không thể là biển số
 
-            return plate;
+            return cleaned;
         }
     }
 }

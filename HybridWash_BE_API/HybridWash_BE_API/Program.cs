@@ -10,6 +10,7 @@ using HybridWash.Services.Implementations;
 using HybridWash.Services.Interfaces;
 using HybridWash_BE_API.Security;
 using Microsoft.EntityFrameworkCore;
+using HybridWash_BE_API.BackgroundServices;
 
 namespace HybridWash_BE_API
 {
@@ -57,12 +58,15 @@ namespace HybridWash_BE_API
             builder.Services.AddScoped<IBookingRepository, BookingRepository>();
             builder.Services.AddScoped<IBookingService, BookingService>();
 
-            builder.Services.AddHttpClient<IPlateOcrService, GoogleVisionPlateOcrService>();
+            builder.Services.AddHttpClient<IPlateOcrService, OcrSpacePlateOcrService>();
+
+            // Register Background Service for auto-cleanup
+            builder.Services.AddHostedService<BookingCleanupBackgroundService>();
 
             builder.Services.AddMemoryCache();
 
             // Background Service for Washing Automation
-            builder.Services.AddHostedService<HybridWash.Services.BackgroundServices.WashStatusUpdaterService>();
+            //builder.Services.AddHostedService<HybridWash.Services.BackgroundServices.WashStatusUpdaterService>();
 
             builder.Services.AddSingleton<ITokenGenerator, JwtTokenGenerator>();
             builder.Services.AddLoyaltyModule();
