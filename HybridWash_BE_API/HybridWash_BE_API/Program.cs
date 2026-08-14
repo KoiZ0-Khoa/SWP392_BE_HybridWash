@@ -13,6 +13,7 @@ using HybridWash.Services.Interfaces;
 using HybridWash_BE_API.Security;
 using Microsoft.EntityFrameworkCore;
 using HybridWash_BE_API.BackgroundServices;
+using HybridWash.Services.BackgroundServices;
 
 namespace HybridWash_BE_API
 {
@@ -89,7 +90,7 @@ namespace HybridWash_BE_API
             builder.Services.AddMemoryCache();
 
             // Background Service for Washing Automation
-            builder.Services.AddHostedService<HybridWash.Services.BackgroundServices.WashStatusUpdaterService>();
+
             builder.Services.AddHostedService<HybridWash.Services.BackgroundServices.MonthlyTierReviewService>();
 
             builder.Services.AddSingleton<ITokenGenerator, JwtTokenGenerator>();
