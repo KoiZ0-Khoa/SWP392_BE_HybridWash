@@ -1,4 +1,4 @@
-using HybridWash.Entities.Models;
+﻿using HybridWash.Entities.Models;
 using HybridWash.Repositories.Implementations;
 using HybridWash.Repositories.Interfaces;
 using HybridWash.Services.DTOs.TimeSlot;
@@ -110,23 +110,5 @@ namespace HybridWash.Services.Implementations
             };
         }
 
-        public async Task<TimeSlotDto> ToggleSlotStatusAsync(int slotId, bool isActive)
-        {
-            var slot = await _timeSlotRepository.GetTimeSlotByIdAsync(slotId);
-            if (slot == null) throw new Exception("Slot not found");
-
-            slot.IsActive = isActive;
-            await _timeSlotRepository.UpdateTimeSlotAsync(slot);
-
-            return new TimeSlotDto
-            {
-                SlotId = slot.SlotId,
-                StartTime = slot.StartTime,
-                EndTime = slot.EndTime,
-                CarCapacity = slot.CarCapacity,
-                BikeCapacity = slot.BikeCapacity,
-                IsActive = slot.IsActive
-            };
-        }
     }
 }

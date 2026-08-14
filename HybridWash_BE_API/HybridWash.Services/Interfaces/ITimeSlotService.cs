@@ -1,4 +1,4 @@
-using HybridWash.Entities.Models;
+﻿using HybridWash.Entities.Models;
 using HybridWash.Services.DTOs.TimeSlot;
 using System;
 using System.Collections.Generic;
@@ -14,6 +14,5 @@ namespace HybridWash.Services.Interfaces
         Task<TimeSlotDto> CreateTimeSlotAsync(CreateTimeSlotDto dto);
         Task<List<AvailableSlotDto>> GetAvailableSlotsAsync(DateOnly date);
         Task<TimeSlotDto?> GetTimeSlotByIdAsync(int slotId);
-        Task<TimeSlotDto> ToggleSlotStatusAsync(int slotId, bool isActive);
     }
 }

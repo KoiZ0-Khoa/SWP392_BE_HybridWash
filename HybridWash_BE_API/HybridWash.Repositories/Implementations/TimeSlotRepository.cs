@@ -1,4 +1,4 @@
-using HybridWash.Entities.Models;
+﻿using HybridWash.Entities.Models;
 using HybridWash.Repositories.Data;
 using HybridWash.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -24,12 +24,7 @@ namespace HybridWash.Repositories.Implementations
         {
             _context.TimeSlots.Add(timeSlot);
             await _context.SaveChangesAsync();
-        }
 
-        public async Task UpdateTimeSlotAsync(TimeSlot timeSlot)
-        {
-            _context.TimeSlots.Update(timeSlot);
-            await _context.SaveChangesAsync();
         }
 
         public async Task<(int CarCount, int BikeCount)> CountBookingsInSlotAsync(int slotId, DateOnly bookingDate)

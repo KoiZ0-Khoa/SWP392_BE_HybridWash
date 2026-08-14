@@ -12,7 +12,6 @@ using HybridWash.Services.Implementations;
 using HybridWash.Services.Interfaces;
 using HybridWash_BE_API.Security;
 using Microsoft.EntityFrameworkCore;
-using HybridWash_BE_API.BackgroundServices;
 
 namespace HybridWash_BE_API
 {
@@ -80,11 +79,6 @@ namespace HybridWash_BE_API
             builder.Services.AddDefaultAWSOptions(awsOptions);
             builder.Services.AddAWSService<IAmazonS3>();
             builder.Services.AddScoped<IAwsS3Service, AwsS3Service>();
-
-            builder.Services.AddHttpClient<IPlateOcrService, OcrSpacePlateOcrService>();
-
-            // Register Background Service for auto-cleanup
-            builder.Services.AddHostedService<BookingCleanupBackgroundService>();
 
             builder.Services.AddMemoryCache();
 
