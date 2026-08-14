@@ -151,5 +151,32 @@ namespace HybridWash_BE_API.Controllers
                 return BadRequest(new { Message = ex.Message });
             }
         }
+
+        [HttpPost("scan-plate")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> ScanPlate(IFormFile image)
+        {
+            try
+            {
+                if (image == null || image.Length == 0)
+                    return BadRequest(new { Message = "Image file is required" });
+
+                // Giới hạn file 5MB
+                if (image.Length > 5 * 1024 * 1024)
+                    return BadRequest(new { Message = "Image must be smaller than 5MB" });
+
+                using var stream = image.OpenReadStream();
+                var result = await _bookingService.ScanPlateAsync(stream);
+
+                if (result.DetectedPlate == null)
+                    return Ok(new { Success = true, Message = "Could not detect license plate", Data = result });
+
+                return Ok(new { Success = true, Data = result });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
     }
 }
