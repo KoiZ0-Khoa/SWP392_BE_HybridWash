@@ -26,6 +26,7 @@ namespace HybridWash.Services.DTOs.Booking
         public decimal? FinalPrice { get; set; }
         public int? PromotionId { get; set; }
         public int? RedemptionId { get; set; }
+        public AppliedRewardDto? AppliedReward { get; set; }
         public IReadOnlyList<BookingAddOnDto> AddOns { get; set; } = [];
         public string? QrCode { get; set; }
         public string? Status { get; set; }

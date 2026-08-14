@@ -120,6 +120,8 @@ namespace HybridWash.Repositories.Implementations
                 .Include(b => b.BookingAddOns)
                     .ThenInclude(addOn => addOn.Service)
                 .Include(b => b.RewardRedemptions)
+                    .ThenInclude(redemption => redemption.Reward)
+                        .ThenInclude(reward => reward.Service)
                 .FirstOrDefaultAsync(b => b.BookingId == bookingId);
         }
 
@@ -133,6 +135,8 @@ namespace HybridWash.Repositories.Implementations
                 .Include(b => b.BookingAddOns)
                     .ThenInclude(addOn => addOn.Service)
                 .Include(b => b.RewardRedemptions)
+                    .ThenInclude(redemption => redemption.Reward)
+                        .ThenInclude(reward => reward.Service)
                 .Where(b => (b.Customer != null && b.Customer.PhoneNumber == phone)
                          || b.GuestPhone == phone)
                 .OrderByDescending(b => b.BookingDate)
@@ -149,6 +153,8 @@ namespace HybridWash.Repositories.Implementations
                 .Include(b => b.BookingAddOns)
                     .ThenInclude(addOn => addOn.Service)
                 .Include(b => b.RewardRedemptions)
+                    .ThenInclude(redemption => redemption.Reward)
+                        .ThenInclude(reward => reward.Service)
                 .Where(b => (b.Vehicle != null && b.Vehicle.LicensePlate == licensePlate)
                          || b.GuestLicensePlate == licensePlate)
                 .OrderByDescending(b => b.BookingDate)
@@ -167,6 +173,8 @@ namespace HybridWash.Repositories.Implementations
                 .Include(b => b.BookingAddOns)
                     .ThenInclude(addOn => addOn.Service)
                 .Include(b => b.RewardRedemptions)
+                    .ThenInclude(redemption => redemption.Reward)
+                        .ThenInclude(reward => reward.Service)
                 .FirstOrDefaultAsync(b => b.QrCode == qrCode);
         }
 
@@ -181,6 +189,8 @@ namespace HybridWash.Repositories.Implementations
                 .Include(b => b.BookingAddOns)
                     .ThenInclude(addOn => addOn.Service)
                 .Include(b => b.RewardRedemptions)
+                    .ThenInclude(redemption => redemption.Reward)
+                        .ThenInclude(reward => reward.Service)
                 .AsQueryable();
         }
 

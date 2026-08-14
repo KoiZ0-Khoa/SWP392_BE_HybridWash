@@ -9,6 +9,7 @@ public class RewardDTO
     public int PointCost { get; set; }
     public decimal? DiscountValue { get; set; }
     public int? ServiceId { get; set; }
+    public string? ServiceName { get; set; }
     public string MinimumTier { get; set; } = null!;
     public DateTime? ValidFrom { get; set; }
     public DateTime? ValidTo { get; set; }

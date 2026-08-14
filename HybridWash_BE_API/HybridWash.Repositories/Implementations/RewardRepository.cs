@@ -19,6 +19,7 @@ public class RewardRepository : IRewardRepository
     {
         return await _context.Rewards
             .AsNoTracking()
+            .Include(reward => reward.Service)
             .OrderByDescending(reward => reward.CreatedAt)
             .ToListAsync();
     }
@@ -27,6 +28,7 @@ public class RewardRepository : IRewardRepository
     {
         return await _context.Rewards
             .AsNoTracking()
+            .Include(reward => reward.Service)
             .Where(reward => reward.IsActive
                 && (!reward.ValidFrom.HasValue || reward.ValidFrom <= now)
                 && (!reward.ValidTo.HasValue || reward.ValidTo >= now))
@@ -36,7 +38,9 @@ public class RewardRepository : IRewardRepository
 
     public Task<Reward?> GetByIdAsync(int rewardId)
     {
-        return _context.Rewards.FirstOrDefaultAsync(reward => reward.RewardId == rewardId);
+        return _context.Rewards
+            .Include(reward => reward.Service)
+            .FirstOrDefaultAsync(reward => reward.RewardId == rewardId);
     }
 
     public Task<bool> RewardNameExistsAsync(string rewardName, int? excludingRewardId = null)
@@ -76,6 +80,7 @@ public class RewardRepository : IRewardRepository
 
             var existing = await _context.RewardRedemptions
                 .Include(redemption => redemption.Reward)
+                    .ThenInclude(reward => reward.Service)
                 .FirstOrDefaultAsync(redemption => redemption.RequestId == requestId);
             if (existing != null)
             {
@@ -83,7 +88,9 @@ public class RewardRepository : IRewardRepository
                 return existing.CustomerId == customerId ? existing : null;
             }
 
-            var reward = await _context.Rewards.FirstAsync(item => item.RewardId == rewardId);
+            var reward = await _context.Rewards
+                .Include(item => item.Service)
+                .FirstAsync(item => item.RewardId == rewardId);
             var customer = await _context.Customers.FirstAsync(item => item.CustomerId == customerId);
             if ((customer.CurrentPoints ?? 0) < reward.PointCost)
             {
@@ -129,6 +136,7 @@ public class RewardRepository : IRewardRepository
         return await _context.RewardRedemptions
             .AsNoTracking()
             .Include(redemption => redemption.Reward)
+                .ThenInclude(reward => reward.Service)
             .Where(redemption => redemption.CustomerId == customerId)
             .OrderByDescending(redemption => redemption.RedeemedAt)
             .ToListAsync();
@@ -139,6 +147,7 @@ public class RewardRepository : IRewardRepository
         return _context.RewardRedemptions
             .AsNoTracking()
             .Include(redemption => redemption.Reward)
+                .ThenInclude(reward => reward.Service)
             .FirstOrDefaultAsync(redemption => redemption.RedemptionId == redemptionId);
     }
 }
