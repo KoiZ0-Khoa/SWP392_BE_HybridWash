@@ -1,4 +1,4 @@
-﻿using HybridWash.Services.DTOs.TimeSlot;
+using HybridWash.Services.DTOs.TimeSlot;
 using HybridWash.Services.Implementations;
 using HybridWash.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -63,5 +63,23 @@ namespace HybridWash_BE_API.Controllers
             return Ok(slot);
         }
 
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult> ToggleStatus(int id, [FromBody] UpdateSlotStatusDto dto)
+        {
+            try
+            {
+                var result = await _timeSlotService.ToggleSlotStatusAsync(id, dto.IsActive);
+                return Ok(new { Success = true, Data = result });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+    }
+
+    public class UpdateSlotStatusDto
+    {
+        public bool IsActive { get; set; }
     }
 }
