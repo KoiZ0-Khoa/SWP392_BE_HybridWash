@@ -7,6 +7,7 @@ public class TierRule
     public int Rank { get; set; }
     public decimal MinimumSpend { get; set; }
     public int MinimumVisits { get; set; }
+    public string QualificationMode { get; set; } = "OR";
     public int EvaluationPeriodMonths { get; set; }
     public int BookingWindowDays { get; set; }
     public decimal PointMultiplier { get; set; }

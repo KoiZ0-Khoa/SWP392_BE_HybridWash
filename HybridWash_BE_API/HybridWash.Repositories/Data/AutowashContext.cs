@@ -445,6 +445,10 @@ public partial class AutowashContext : DbContext
             entity.Property(e => e.TierRuleId).HasColumnName("TierRuleID");
             entity.Property(e => e.TierName).HasMaxLength(20).IsUnicode(false);
             entity.Property(e => e.MinimumSpend).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.QualificationMode)
+                .HasMaxLength(3)
+                .IsUnicode(false)
+                .HasDefaultValue("OR");
             entity.Property(e => e.PointMultiplier).HasColumnType("decimal(5, 2)");
             entity.Property(e => e.BenefitDescription).HasMaxLength(500);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
@@ -460,6 +464,7 @@ public partial class AutowashContext : DbContext
                     Rank = 1,
                     MinimumSpend = 0,
                     MinimumVisits = 0,
+                    QualificationMode = "OR",
                     EvaluationPeriodMonths = 12,
                     BookingWindowDays = 7,
                     PointMultiplier = 1.00m,
@@ -474,6 +479,7 @@ public partial class AutowashContext : DbContext
                     Rank = 2,
                     MinimumSpend = 500_000,
                     MinimumVisits = 5,
+                    QualificationMode = "OR",
                     EvaluationPeriodMonths = 12,
                     BookingWindowDays = 10,
                     PointMultiplier = 1.10m,
@@ -488,6 +494,7 @@ public partial class AutowashContext : DbContext
                     Rank = 3,
                     MinimumSpend = 2_000_000,
                     MinimumVisits = 15,
+                    QualificationMode = "OR",
                     EvaluationPeriodMonths = 12,
                     BookingWindowDays = 12,
                     PointMultiplier = 1.25m,
@@ -502,6 +509,7 @@ public partial class AutowashContext : DbContext
                     Rank = 4,
                     MinimumSpend = 5_000_000,
                     MinimumVisits = 30,
+                    QualificationMode = "OR",
                     EvaluationPeriodMonths = 12,
                     BookingWindowDays = 14,
                     PointMultiplier = 1.50m,

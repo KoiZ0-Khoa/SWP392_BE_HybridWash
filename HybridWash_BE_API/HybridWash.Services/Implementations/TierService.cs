@@ -25,6 +25,7 @@ public class TierService : ITierService
         UpdateTierRuleDTO request)
     {
         var normalizedTier = NormalizeTier(tierName);
+        var qualificationMode = NormalizeQualificationMode(request.QualificationMode);
         if (normalizedTier == "Member" && !request.IsActive)
         {
             throw new ArgumentException("Member tier cannot be deactivated.");
@@ -40,6 +41,7 @@ public class TierService : ITierService
         var candidate = rules.First(item => item.TierName == normalizedTier);
         candidate.MinimumSpend = request.MinimumSpend;
         candidate.MinimumVisits = request.MinimumVisits;
+        candidate.QualificationMode = qualificationMode;
         candidate.EvaluationPeriodMonths = request.EvaluationPeriodMonths;
         candidate.BookingWindowDays = request.BookingWindowDays;
         candidate.PointMultiplier = request.PointMultiplier;
@@ -48,6 +50,7 @@ public class TierService : ITierService
 
         rule.MinimumSpend = request.MinimumSpend;
         rule.MinimumVisits = request.MinimumVisits;
+        rule.QualificationMode = qualificationMode;
         rule.EvaluationPeriodMonths = request.EvaluationPeriodMonths;
         rule.BookingWindowDays = request.BookingWindowDays;
         rule.PointMultiplier = request.PointMultiplier;
@@ -125,6 +128,7 @@ public class TierService : ITierService
             BookingWindowDays = current.BookingWindowDays,
             PointMultiplier = current.PointMultiplier,
             NextTier = next?.TierName,
+            QualificationMode = metricRule.QualificationMode,
             SpendRequiredForNextTier = next == null
                 ? 0
                 : Math.Max(next.MinimumSpend - metrics.Spend, 0),
@@ -164,7 +168,7 @@ public class TierService : ITierService
         foreach (var rule in rules)
         {
             var metrics = await GetMetricsAsync(customerId, rule, reviewedAt);
-            if (metrics.Spend >= rule.MinimumSpend && metrics.Visits >= rule.MinimumVisits)
+            if (MeetsRule(rule, metrics))
             {
                 targetRule = rule;
                 targetMetrics = metrics;
@@ -189,7 +193,7 @@ public class TierService : ITierService
                 QualifyingSpend = targetMetrics.Spend,
                 QualifyingVisits = targetMetrics.Visits,
                 ReviewType = reviewType,
-                Reason = $"Matched {targetRule.TierName} rule over the last {targetRule.EvaluationPeriodMonths} month(s).",
+                Reason = $"Matched {targetRule.TierName} {targetRule.QualificationMode} rule over the last {targetRule.EvaluationPeriodMonths} month(s).",
                 ReviewedAt = reviewedAt
             });
             customer.CurrentTier = targetRule.TierName;
@@ -236,6 +240,26 @@ public class TierService : ITierService
             ?? throw new ArgumentException("Tier must be Member, Silver, Gold or Platinum.");
     }
 
+    private static string NormalizeQualificationMode(string? qualificationMode)
+    {
+        var normalized = qualificationMode?.Trim().ToUpperInvariant();
+        return normalized is "AND" or "OR"
+            ? normalized
+            : throw new ArgumentException("QualificationMode must be AND or OR.");
+    }
+
+    private static bool MeetsRule(
+        TierRule rule,
+        (decimal Spend, int Visits) metrics)
+    {
+        var meetsSpend = metrics.Spend >= rule.MinimumSpend;
+        var meetsVisits = metrics.Visits >= rule.MinimumVisits;
+
+        return NormalizeQualificationMode(rule.QualificationMode) == "OR"
+            ? meetsSpend || meetsVisits
+            : meetsSpend && meetsVisits;
+    }
+
     private static void ValidateThresholdOrder(IReadOnlyList<TierRule> rules)
     {
         var activeRules = rules.Where(rule => rule.IsActive).OrderBy(rule => rule.Rank).ToList();
@@ -259,6 +283,7 @@ public class TierService : ITierService
             Rank = rule.Rank,
             MinimumSpend = rule.MinimumSpend,
             MinimumVisits = rule.MinimumVisits,
+            QualificationMode = rule.QualificationMode,
             EvaluationPeriodMonths = rule.EvaluationPeriodMonths,
             BookingWindowDays = rule.BookingWindowDays,
             PointMultiplier = rule.PointMultiplier,

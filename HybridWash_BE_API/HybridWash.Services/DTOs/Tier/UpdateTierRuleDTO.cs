@@ -10,6 +10,10 @@ public class UpdateTierRuleDTO
     [Range(0, 1_000_000)]
     public int MinimumVisits { get; set; }
 
+    [Required]
+    [RegularExpression("(?i)^(AND|OR)$", ErrorMessage = "QualificationMode must be AND or OR.")]
+    public string QualificationMode { get; set; } = "OR";
+
     [Range(1, 120)]
     public int EvaluationPeriodMonths { get; set; }
 
