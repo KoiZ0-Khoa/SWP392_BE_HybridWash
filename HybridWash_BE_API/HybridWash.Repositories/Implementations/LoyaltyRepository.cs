@@ -49,7 +49,7 @@ public class LoyaltyRepository : ILoyaltyRepository
         return (transactions, totalCount);
     }
 
-    public async Task<int> CompleteBookingAndEarnPointsAsync(
+    public async Task<(int EarnedPoints, int? CustomerId)> CompleteBookingAndEarnPointsAsync(
         int bookingId,
         decimal vndPerPoint,
         DateTime completedAt)
@@ -80,20 +80,30 @@ public class LoyaltyRepository : ILoyaltyRepository
             {
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
-                return 0;
+                return (0, booking.CustomerId);
             }
 
             if (!booking.CustomerId.HasValue)
             {
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
-                return 0;
+                return (0, null);
             }
 
             var customer = await _context.Customers
                 .FirstAsync(item => item.CustomerId == booking.CustomerId.Value);
             var amountSpent = Math.Max(booking.FinalPrice ?? 0, 0);
-            var earnedPoints = decimal.ToInt32(Math.Floor(amountSpent / vndPerPoint));
+            var pointMultiplier = await _context.TierRules
+                .Where(rule => rule.TierName == (customer.CurrentTier ?? "Member"))
+                .Select(rule => (decimal?)rule.PointMultiplier)
+                .FirstOrDefaultAsync()
+                ?? await _context.TierRules
+                    .Where(rule => rule.TierName == "Member")
+                    .Select(rule => (decimal?)rule.PointMultiplier)
+                    .FirstOrDefaultAsync()
+                ?? 1m;
+            var earnedPoints = decimal.ToInt32(Math.Floor(
+                amountSpent / vndPerPoint * pointMultiplier));
 
             customer.CurrentPoints = (customer.CurrentPoints ?? 0) + earnedPoints;
             customer.TotalSpent = (customer.TotalSpent ?? 0) + amountSpent;
@@ -111,7 +121,7 @@ public class LoyaltyRepository : ILoyaltyRepository
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
-            return earnedPoints;
+            return (earnedPoints, customer.CustomerId);
         });
     }
 }

@@ -8,13 +8,16 @@ namespace HybridWash.Services.Implementations;
 public class LoyaltyService : ILoyaltyService
 {
     private readonly ILoyaltyRepository _loyaltyRepository;
+    private readonly ITierService _tierService;
     private readonly decimal _vndPerPoint;
 
     public LoyaltyService(
         ILoyaltyRepository loyaltyRepository,
+        ITierService tierService,
         IConfiguration configuration)
     {
         _loyaltyRepository = loyaltyRepository;
+        _tierService = tierService;
 
         if (!decimal.TryParse(configuration["Loyalty:VndPerPoint"], out _vndPerPoint)
             || _vndPerPoint <= 0)
@@ -32,12 +35,20 @@ public class LoyaltyService : ILoyaltyService
             return null;
         }
 
+        var progress = await _tierService.GetProgressAsync(customerId, DateTime.UtcNow);
         return new LoyaltySummaryDTO
         {
             CurrentPoints = customer.CurrentPoints ?? 0,
             CurrentTier = customer.CurrentTier ?? "Member",
             TotalSpent = customer.TotalSpent ?? 0,
-            TotalVisits = await _loyaltyRepository.GetCompletedVisitCountAsync(customerId)
+            TotalVisits = await _loyaltyRepository.GetCompletedVisitCountAsync(customerId),
+            QualifyingSpend = progress.QualifyingSpend,
+            QualifyingVisits = progress.QualifyingVisits,
+            BookingWindowDays = progress.BookingWindowDays,
+            PointMultiplier = progress.PointMultiplier,
+            NextTier = progress.NextTier,
+            SpendRequiredForNextTier = progress.SpendRequiredForNextTier,
+            VisitsRequiredForNextTier = progress.VisitsRequiredForNextTier
         };
     }
 
@@ -72,11 +83,20 @@ public class LoyaltyService : ILoyaltyService
         };
     }
 
-    public Task<int> CompleteBookingAndEarnPointsAsync(int bookingId, DateTime completedAt)
+    public async Task<int> CompleteBookingAndEarnPointsAsync(int bookingId, DateTime completedAt)
     {
-        return _loyaltyRepository.CompleteBookingAndEarnPointsAsync(
+        var result = await _loyaltyRepository.CompleteBookingAndEarnPointsAsync(
             bookingId,
             _vndPerPoint,
             completedAt);
+
+        if (result.CustomerId.HasValue)
+        {
+            await _tierService.ReviewAfterCompletedBookingAsync(
+                result.CustomerId.Value,
+                completedAt);
+        }
+
+        return result.EarnedPoints;
     }
 }

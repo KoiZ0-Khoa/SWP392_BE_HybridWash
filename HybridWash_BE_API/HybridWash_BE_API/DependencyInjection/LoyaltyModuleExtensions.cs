@@ -15,6 +15,8 @@ public static class LoyaltyModuleExtensions
         services.AddScoped<IPromotionService, PromotionService>();
         services.AddScoped<IRewardRepository, RewardRepository>();
         services.AddScoped<IRewardService, RewardService>();
+        services.AddScoped<ITierRepository, TierRepository>();
+        services.AddScoped<ITierService, TierService>();
 
         return services;
     }

@@ -1,3 +1,4 @@
+using Amazon.Runtime;
 using Amazon.S3;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -60,7 +61,22 @@ namespace HybridWash_BE_API
             builder.Services.AddScoped<IEmailService, EmailService>();
 
             // AWS S3
-            builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+            // AccessKeyId/SecretAccessKey are stored in .NET User Secrets for local development.
+            // If they are not configured, the AWS SDK falls back to its default credential chain
+            // (environment variables, AWS profile, IAM role, etc.).
+            var awsOptions = builder.Configuration.GetAWSOptions();
+            var awsAccessKeyId = builder.Configuration["AWS:AccessKeyId"];
+            var awsSecretAccessKey = builder.Configuration["AWS:SecretAccessKey"];
+
+            if (!string.IsNullOrWhiteSpace(awsAccessKeyId) &&
+                !string.IsNullOrWhiteSpace(awsSecretAccessKey))
+            {
+                awsOptions.Credentials = new BasicAWSCredentials(
+                    awsAccessKeyId,
+                    awsSecretAccessKey);
+            }
+
+            builder.Services.AddDefaultAWSOptions(awsOptions);
             builder.Services.AddAWSService<IAmazonS3>();
             builder.Services.AddScoped<IAwsS3Service, AwsS3Service>();
 
@@ -68,6 +84,7 @@ namespace HybridWash_BE_API
 
             // Background Service for Washing Automation
             builder.Services.AddHostedService<HybridWash.Services.BackgroundServices.WashStatusUpdaterService>();
+            builder.Services.AddHostedService<HybridWash.Services.BackgroundServices.MonthlyTierReviewService>();
 
             builder.Services.AddSingleton<ITokenGenerator, JwtTokenGenerator>();
             builder.Services.AddLoyaltyModule();
