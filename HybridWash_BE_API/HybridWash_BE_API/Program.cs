@@ -12,7 +12,6 @@ using HybridWash.Services.Implementations;
 using HybridWash.Services.Interfaces;
 using HybridWash_BE_API.Security;
 using Microsoft.EntityFrameworkCore;
-using HybridWash_BE_API.BackgroundServices;
 using HybridWash.Services.BackgroundServices;
 
 namespace HybridWash_BE_API
