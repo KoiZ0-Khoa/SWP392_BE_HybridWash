@@ -1,11 +1,7 @@
-namespace HybridWash.Services.DTOs.Loyalty;
+namespace HybridWash.Services.DTOs.Tier;
 
-public class LoyaltySummaryDTO
+public class TierProgressDTO
 {
-    public int CurrentPoints { get; set; }
-    public string CurrentTier { get; set; } = null!;
-    public decimal TotalSpent { get; set; }
-    public int TotalVisits { get; set; }
     public decimal QualifyingSpend { get; set; }
     public int QualifyingVisits { get; set; }
     public int BookingWindowDays { get; set; }

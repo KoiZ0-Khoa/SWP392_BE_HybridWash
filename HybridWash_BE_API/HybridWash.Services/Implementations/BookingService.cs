@@ -15,6 +15,7 @@ namespace HybridWash.Services.Implementations
         private readonly IPromotionRepository _promotionRepo;
         private readonly IRewardRepository _rewardRepo;
         private readonly ILoyaltyService _loyaltyService;
+        private readonly ITierService _tierService;
 
         public BookingService(
             IBookingRepository bookingRepo,
@@ -22,7 +23,8 @@ namespace HybridWash.Services.Implementations
             ITimeSlotRepository timeSlotRepo,
             IPromotionRepository promotionRepo,
             IRewardRepository rewardRepo,
-            ILoyaltyService loyaltyService)
+            ILoyaltyService loyaltyService,
+            ITierService tierService)
         {
             _bookingRepo = bookingRepo;
             _serviceRepo = serviceRepo;
@@ -30,6 +32,7 @@ namespace HybridWash.Services.Implementations
             _promotionRepo = promotionRepo;
             _rewardRepo = rewardRepo;
             _loyaltyService = loyaltyService;
+            _tierService = tierService;
         }
 
         public async Task<BookingDto> CreateBookingAsync(CreateBookingDto dto)
@@ -86,14 +89,7 @@ namespace HybridWash.Services.Implementations
             // --- Tier-based booking window (Member only) ---
             if (customer != null)
             {
-                int maxDays = customer.CurrentTier switch
-                {
-                    "Member" => 7,
-                    "Silver" => 10,
-                    "Gold" => 12,
-                    "Platinum" => 14,
-                    _ => 7
-                };
+                var maxDays = await _tierService.GetBookingWindowDaysAsync(customer.CurrentTier);
                 if (dto.BookingDate > today.AddDays(maxDays))
                     throw new Exception(
                         $"Your tier ({customer.CurrentTier}) only allows booking up to {maxDays} days in advance");

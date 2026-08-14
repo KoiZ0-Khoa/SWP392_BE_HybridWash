@@ -18,6 +18,8 @@ public partial class AutowashContext : DbContext
 
     public virtual DbSet<Customer> Customers { get; set; }
 
+    public virtual DbSet<CustomerTierHistory> CustomerTierHistories { get; set; }
+
     public virtual DbSet<ParkingReceipt> ParkingReceipts { get; set; }
 
     public virtual DbSet<PointLedger> PointLedgers { get; set; }
@@ -33,6 +35,8 @@ public partial class AutowashContext : DbContext
     public virtual DbSet<Staff> Staff { get; set; }
 
     public virtual DbSet<TimeSlot> TimeSlots { get; set; }
+
+    public virtual DbSet<TierRule> TierRules { get; set; }
 
     public virtual DbSet<Vehicle> Vehicles { get; set; }
 
@@ -184,6 +188,27 @@ public partial class AutowashContext : DbContext
             entity.Property(e => e.TotalSpent)
                 .HasDefaultValue(0m)
                 .HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.LastTierReviewedAt).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<CustomerTierHistory>(entity =>
+        {
+            entity.HasKey(e => e.TierHistoryId);
+            entity.ToTable("CustomerTierHistory");
+            entity.Property(e => e.TierHistoryId).HasColumnName("TierHistoryID");
+            entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
+            entity.Property(e => e.PreviousTier).HasMaxLength(20).IsUnicode(false);
+            entity.Property(e => e.NewTier).HasMaxLength(20).IsUnicode(false);
+            entity.Property(e => e.QualifyingSpend).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.ReviewType).HasMaxLength(20).IsUnicode(false);
+            entity.Property(e => e.Reason).HasMaxLength(500);
+            entity.Property(e => e.ReviewedAt).HasColumnType("datetime");
+            entity.HasIndex(e => new { e.CustomerId, e.ReviewedAt });
+
+            entity.HasOne(e => e.Customer).WithMany(e => e.TierHistories)
+                .HasForeignKey(e => e.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_CustomerTierHistory_Customers");
         });
 
         modelBuilder.Entity<ParkingReceipt>(entity =>
@@ -411,6 +436,79 @@ public partial class AutowashContext : DbContext
             
             entity.Property(e => e.CarCapacity).HasDefaultValue(2);
             entity.Property(e => e.BikeCapacity).HasDefaultValue(5);
+        });
+
+        modelBuilder.Entity<TierRule>(entity =>
+        {
+            entity.HasKey(e => e.TierRuleId);
+            entity.ToTable("TierRules");
+            entity.Property(e => e.TierRuleId).HasColumnName("TierRuleID");
+            entity.Property(e => e.TierName).HasMaxLength(20).IsUnicode(false);
+            entity.Property(e => e.MinimumSpend).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.PointMultiplier).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.BenefitDescription).HasMaxLength(500);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.HasIndex(e => e.TierName).IsUnique();
+            entity.HasIndex(e => e.Rank).IsUnique();
+
+            entity.HasData(
+                new TierRule
+                {
+                    TierRuleId = 1,
+                    TierName = "Member",
+                    Rank = 1,
+                    MinimumSpend = 0,
+                    MinimumVisits = 0,
+                    EvaluationPeriodMonths = 12,
+                    BookingWindowDays = 7,
+                    PointMultiplier = 1.00m,
+                    BenefitDescription = "Book up to 7 days in advance.",
+                    IsActive = true,
+                    UpdatedAt = new DateTime(2026, 8, 13, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new TierRule
+                {
+                    TierRuleId = 2,
+                    TierName = "Silver",
+                    Rank = 2,
+                    MinimumSpend = 500_000,
+                    MinimumVisits = 5,
+                    EvaluationPeriodMonths = 12,
+                    BookingWindowDays = 10,
+                    PointMultiplier = 1.10m,
+                    BenefitDescription = "Book up to 10 days in advance and earn 10% bonus points.",
+                    IsActive = true,
+                    UpdatedAt = new DateTime(2026, 8, 13, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new TierRule
+                {
+                    TierRuleId = 3,
+                    TierName = "Gold",
+                    Rank = 3,
+                    MinimumSpend = 2_000_000,
+                    MinimumVisits = 15,
+                    EvaluationPeriodMonths = 12,
+                    BookingWindowDays = 12,
+                    PointMultiplier = 1.25m,
+                    BenefitDescription = "Book up to 12 days in advance and earn 25% bonus points.",
+                    IsActive = true,
+                    UpdatedAt = new DateTime(2026, 8, 13, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new TierRule
+                {
+                    TierRuleId = 4,
+                    TierName = "Platinum",
+                    Rank = 4,
+                    MinimumSpend = 5_000_000,
+                    MinimumVisits = 30,
+                    EvaluationPeriodMonths = 12,
+                    BookingWindowDays = 14,
+                    PointMultiplier = 1.50m,
+                    BenefitDescription = "Book up to 14 days in advance and earn 50% bonus points.",
+                    IsActive = true,
+                    UpdatedAt = new DateTime(2026, 8, 13, 0, 0, 0, DateTimeKind.Utc)
+                });
         });
 
         modelBuilder.Entity<Vehicle>(entity =>

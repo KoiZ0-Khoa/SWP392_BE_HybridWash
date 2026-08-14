@@ -21,6 +21,8 @@ public partial class Customer
 
     public int? CurrentPoints { get; set; }
 
+    public DateTime? LastTierReviewedAt { get; set; }
+
     public DateTime? CreatedAt { get; set; }
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
@@ -28,6 +30,8 @@ public partial class Customer
     public virtual ICollection<PointLedger> PointLedgers { get; set; } = new List<PointLedger>();
 
     public virtual ICollection<RewardRedemption> RewardRedemptions { get; set; } = new List<RewardRedemption>();
+
+    public virtual ICollection<CustomerTierHistory> TierHistories { get; set; } = new List<CustomerTierHistory>();
 
     public virtual ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
 }
