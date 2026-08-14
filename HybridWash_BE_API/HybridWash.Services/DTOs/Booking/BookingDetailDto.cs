@@ -33,6 +33,7 @@ namespace HybridWash.Services.DTOs.Booking
         public int? PromotionId { get; set; }
         public string? PromoCode { get; set; }
         public int? RedemptionId { get; set; }
+        public AppliedRewardDto? AppliedReward { get; set; }
         public IReadOnlyList<BookingAddOnDto> AddOns { get; set; } = [];
         public string? Status { get; set; }
         public int? StaffId { get; set; }

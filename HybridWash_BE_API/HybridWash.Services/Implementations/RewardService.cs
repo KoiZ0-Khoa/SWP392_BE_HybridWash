@@ -53,7 +53,9 @@ public class RewardService : IRewardService
         };
 
         await _rewardRepository.AddAsync(reward);
-        return Map(reward, false);
+        var createdReward = await _rewardRepository.GetByIdAsync(reward.RewardId)
+            ?? throw new InvalidOperationException("Created reward could not be reloaded.");
+        return Map(createdReward, false);
     }
 
     public async Task<bool> UpdateAsync(int rewardId, UpsertRewardDTO request)
@@ -187,6 +189,7 @@ public class RewardService : IRewardService
             PointCost = reward.PointCost,
             DiscountValue = reward.DiscountValue,
             ServiceId = reward.ServiceId,
+            ServiceName = reward.Service?.ServiceName,
             MinimumTier = reward.MinimumTier,
             ValidFrom = reward.ValidFrom,
             ValidTo = reward.ValidTo,
@@ -205,6 +208,10 @@ public class RewardService : IRewardService
             RewardId = redemption.RewardId,
             RewardName = redemption.Reward.RewardName,
             RewardType = redemption.Reward.RewardType,
+            Description = redemption.Reward.Description,
+            DiscountValue = redemption.Reward.DiscountValue,
+            ServiceId = redemption.Reward.ServiceId,
+            ServiceName = redemption.Reward.Service?.ServiceName,
             PointsSpent = redemption.PointsSpent,
             Status = redemption.Status,
             RedeemedAt = redemption.RedeemedAt,

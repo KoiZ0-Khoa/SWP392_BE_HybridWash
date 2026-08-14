@@ -151,29 +151,13 @@ namespace HybridWash.Services.Implementations
                 customer?.CustomerId,
                 DateTime.UtcNow);
 
-            return new BookingDto
-            {
-                BookingId = booking.BookingId,
-                CustomerId = booking.CustomerId,
-                CustomerName = customer?.FullName ?? dto.GuestName,
-                VehicleId = booking.VehicleId,
-                LicensePlate = vehicle?.LicensePlate ?? dto.GuestLicensePlate ?? "",
-                VehicleType = vehicle?.VehicleType ?? dto.GuestVehicleType,
-                ServiceId = service.ServiceId,
-                ServiceName = service.ServiceName,
-                SlotId = slot.SlotId,
-                StartTime = slot.StartTime,
-                EndTime = slot.EndTime,
-                BookingDate = booking.BookingDate,
-                OriginalPrice = booking.OriginalPrice,
-                FinalPrice = booking.FinalPrice,
-                PromotionId = booking.PromotionId,
-                RedemptionId = benefit.RedemptionId,
-                AddOns = MapAddOns(booking.BookingAddOns),
-                QrCode = booking.QrCode,
-                Status = booking.Status,
-                CreatedAt = booking.CreatedAt
-            };
+            // Reload all display navigations so the create response contains the
+            // same reward/add-on information as detail and history endpoints.
+            var createdBooking = await _bookingRepo
+                .GetBookingByIdWithDetailsAsync(booking.BookingId)
+                ?? throw new InvalidOperationException("Created booking could not be reloaded");
+
+            return MapToBookingDto(createdBooking);
         }
 
         private async Task<BenefitApplication> ResolveBenefitAsync(
@@ -513,7 +497,8 @@ namespace HybridWash.Services.Implementations
             FinalPrice = b.FinalPrice,
             PromotionId = b.PromotionId,
             RedemptionId = b.RewardRedemptions.FirstOrDefault()?.RedemptionId,
-            AddOns = MapAddOns(b.BookingAddOns),
+            AppliedReward = MapAppliedReward(b.RewardRedemptions),
+            AddOns = MapAddOns(b.BookingAddOns, b.RewardRedemptions),
             QrCode = b.QrCode,
             Status = b.Status,
             CreatedAt = b.CreatedAt
@@ -541,7 +526,8 @@ namespace HybridWash.Services.Implementations
             PromotionId = b.PromotionId,
             PromoCode = b.Promotion?.PromoCode,
             RedemptionId = b.RewardRedemptions.FirstOrDefault()?.RedemptionId,
-            AddOns = MapAddOns(b.BookingAddOns),
+            AppliedReward = MapAppliedReward(b.RewardRedemptions),
+            AddOns = MapAddOns(b.BookingAddOns, b.RewardRedemptions),
             Status = b.Status,
             StaffId = b.StaffId,
             StaffName = b.Staff?.FullName,
@@ -553,19 +539,60 @@ namespace HybridWash.Services.Implementations
             CreatedAt = b.CreatedAt
         };
 
-        private static IReadOnlyList<BookingAddOnDto> MapAddOns(
-            IEnumerable<BookingAddOn> addOns)
+        private static AppliedRewardDto? MapAppliedReward(
+            IEnumerable<RewardRedemption> redemptions)
         {
-            return addOns.Select(addOn => new BookingAddOnDto
+            var redemption = redemptions
+                .OrderByDescending(item => item.UsedAt ?? item.RedeemedAt)
+                .FirstOrDefault();
+            if (redemption == null)
+                return null;
+
+            var reward = redemption.Reward;
+            return new AppliedRewardDto
             {
-                BookingAddOnId = addOn.BookingAddOnId,
-                ServiceId = addOn.ServiceId,
-                ServiceName = addOn.Service?.ServiceName ?? string.Empty,
-                PromotionId = addOn.PromotionId,
-                RedemptionId = addOn.RedemptionId,
-                OriginalPrice = addOn.OriginalPrice,
-                FinalPrice = addOn.FinalPrice,
-                Status = addOn.Status
+                RedemptionId = redemption.RedemptionId,
+                RewardId = redemption.RewardId,
+                RewardName = reward?.RewardName ?? string.Empty,
+                RewardType = reward?.RewardType ?? string.Empty,
+                Description = reward?.Description,
+                PointsSpent = redemption.PointsSpent,
+                DiscountValue = reward?.DiscountValue,
+                ServiceId = reward?.ServiceId,
+                ServiceName = reward?.Service?.ServiceName,
+                Status = redemption.Status,
+                RedeemedAt = redemption.RedeemedAt,
+                UsedAt = redemption.UsedAt
+            };
+        }
+
+        private static IReadOnlyList<BookingAddOnDto> MapAddOns(
+            IEnumerable<BookingAddOn> addOns,
+            IEnumerable<RewardRedemption> redemptions)
+        {
+            var redemptionsById = redemptions.ToDictionary(
+                redemption => redemption.RedemptionId);
+
+            return addOns.Select(addOn =>
+            {
+                RewardRedemption? redemption = null;
+                if (addOn.RedemptionId.HasValue)
+                    redemptionsById.TryGetValue(addOn.RedemptionId.Value, out redemption);
+
+                return new BookingAddOnDto
+                {
+                    BookingAddOnId = addOn.BookingAddOnId,
+                    ServiceId = addOn.ServiceId,
+                    ServiceName = addOn.Service?.ServiceName ?? string.Empty,
+                    PromotionId = addOn.PromotionId,
+                    RedemptionId = addOn.RedemptionId,
+                    RewardId = redemption?.RewardId,
+                    RewardName = redemption?.Reward?.RewardName,
+                    RewardType = redemption?.Reward?.RewardType,
+                    OriginalPrice = addOn.OriginalPrice,
+                    FinalPrice = addOn.FinalPrice,
+                    Status = addOn.Status
+                };
             }).ToList();
         }
 

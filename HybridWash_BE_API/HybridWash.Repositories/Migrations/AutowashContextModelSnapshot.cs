@@ -748,6 +748,14 @@ namespace HybridWash.Repositories.Migrations
                     b.Property<int>("MinimumVisits")
                         .HasColumnType("int");
 
+                    b.Property<string>("QualificationMode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(3)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(3)")
+                        .HasDefaultValue("OR");
+
                     b.Property<decimal>("PointMultiplier")
                         .HasColumnType("decimal(5, 2)");
 
@@ -784,6 +792,7 @@ namespace HybridWash.Repositories.Migrations
                             MinimumSpend = 0m,
                             MinimumVisits = 0,
                             PointMultiplier = 1.00m,
+                            QualificationMode = "OR",
                             Rank = 1,
                             TierName = "Member",
                             UpdatedAt = new DateTime(2026, 8, 13, 0, 0, 0, 0, DateTimeKind.Utc)
@@ -798,6 +807,7 @@ namespace HybridWash.Repositories.Migrations
                             MinimumSpend = 500000m,
                             MinimumVisits = 5,
                             PointMultiplier = 1.10m,
+                            QualificationMode = "OR",
                             Rank = 2,
                             TierName = "Silver",
                             UpdatedAt = new DateTime(2026, 8, 13, 0, 0, 0, 0, DateTimeKind.Utc)
@@ -812,6 +822,7 @@ namespace HybridWash.Repositories.Migrations
                             MinimumSpend = 2000000m,
                             MinimumVisits = 15,
                             PointMultiplier = 1.25m,
+                            QualificationMode = "OR",
                             Rank = 3,
                             TierName = "Gold",
                             UpdatedAt = new DateTime(2026, 8, 13, 0, 0, 0, 0, DateTimeKind.Utc)
@@ -826,6 +837,7 @@ namespace HybridWash.Repositories.Migrations
                             MinimumSpend = 5000000m,
                             MinimumVisits = 30,
                             PointMultiplier = 1.50m,
+                            QualificationMode = "OR",
                             Rank = 4,
                             TierName = "Platinum",
                             UpdatedAt = new DateTime(2026, 8, 13, 0, 0, 0, 0, DateTimeKind.Utc)

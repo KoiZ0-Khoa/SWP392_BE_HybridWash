@@ -1,6 +1,7 @@
 using HybridWash.Entities.Models;
 using HybridWash.Repositories.Interfaces;
 using HybridWash.Services.DTOs;
+using HybridWash.Services.DTOs.Booking;
 using HybridWash.Services.Interfaces;
 
 namespace HybridWash.Services.Implementations
@@ -24,18 +25,7 @@ namespace HybridWash.Services.Implementations
         public async Task<IEnumerable<BookingResponseDTO>> GetTodayBookingsAsync()
         {
             var bookings = await _staffRepository.GetTodayBookingsAsync();
-            return bookings.Select(b => new BookingResponseDTO
-            {
-                BookingId = b.BookingId,
-                CustomerName = b.Customer?.FullName ?? b.GuestName,
-                CustomerPhone = b.Customer?.PhoneNumber ?? b.GuestPhone,
-                LicensePlate = b.Vehicle?.LicensePlate ?? b.GuestLicensePlate ?? "",
-                VehicleType = b.Vehicle?.VehicleType ?? b.GuestVehicleType,
-                Status = b.Status,
-                SlotId = b.SlotId,
-                ServiceId = b.ServiceId,
-                BookingDate = b.BookingDate
-            });
+            return bookings.Select(MapBookingResponse);
         }
 
         public async Task<DailyHistoryResponseDTO> GetDailyHistoryAsync(DateOnly date)
@@ -50,18 +40,7 @@ namespace HybridWash.Services.Implementations
                 TotalBookings = bookings.Count(),
                 VehiclesIn = bookings.Count(b => inStatuses.Contains(b.Status)),
                 VehiclesOut = bookings.Count(b => b.Status == "CheckedOut"),
-                Bookings = bookings.Select(b => new BookingResponseDTO
-                {
-                    BookingId = b.BookingId,
-                    CustomerName = b.Customer?.FullName ?? b.GuestName,
-                    CustomerPhone = b.Customer?.PhoneNumber ?? b.GuestPhone,
-                    LicensePlate = b.Vehicle?.LicensePlate ?? b.GuestLicensePlate ?? "",
-                    VehicleType = b.Vehicle?.VehicleType ?? b.GuestVehicleType,
-                    Status = b.Status,
-                    SlotId = b.SlotId,
-                    ServiceId = b.ServiceId,
-                    BookingDate = b.BookingDate
-                })
+                Bookings = bookings.Select(MapBookingResponse)
             };
 
             return response;
@@ -198,6 +177,87 @@ namespace HybridWash.Services.Implementations
             await _staffRepository.SaveChangesAsync();
 
             return $"Check-out thành công cho xe có biển số {licensePlate}. Đơn hàng đã hoàn tất.";
+        }
+
+        private static BookingResponseDTO MapBookingResponse(Booking booking)
+        {
+            var redemption = booking.RewardRedemptions
+                .OrderByDescending(item => item.UsedAt ?? item.RedeemedAt)
+                .FirstOrDefault();
+
+            AppliedRewardDto? appliedReward = null;
+            if (redemption != null)
+            {
+                var reward = redemption.Reward;
+                appliedReward = new AppliedRewardDto
+                {
+                    RedemptionId = redemption.RedemptionId,
+                    RewardId = redemption.RewardId,
+                    RewardName = reward?.RewardName ?? string.Empty,
+                    RewardType = reward?.RewardType ?? string.Empty,
+                    Description = reward?.Description,
+                    PointsSpent = redemption.PointsSpent,
+                    DiscountValue = reward?.DiscountValue,
+                    ServiceId = reward?.ServiceId,
+                    ServiceName = reward?.Service?.ServiceName,
+                    Status = redemption.Status,
+                    RedeemedAt = redemption.RedeemedAt,
+                    UsedAt = redemption.UsedAt
+                };
+            }
+
+            var redemptionsById = booking.RewardRedemptions.ToDictionary(
+                item => item.RedemptionId);
+            var addOns = booking.BookingAddOns.Select(addOn =>
+            {
+                RewardRedemption? addOnRedemption = null;
+                if (addOn.RedemptionId.HasValue)
+                {
+                    redemptionsById.TryGetValue(
+                        addOn.RedemptionId.Value,
+                        out addOnRedemption);
+                }
+
+                return new BookingAddOnDto
+                {
+                    BookingAddOnId = addOn.BookingAddOnId,
+                    ServiceId = addOn.ServiceId,
+                    ServiceName = addOn.Service?.ServiceName ?? string.Empty,
+                    PromotionId = addOn.PromotionId,
+                    RedemptionId = addOn.RedemptionId,
+                    RewardId = addOnRedemption?.RewardId,
+                    RewardName = addOnRedemption?.Reward?.RewardName,
+                    RewardType = addOnRedemption?.Reward?.RewardType,
+                    OriginalPrice = addOn.OriginalPrice,
+                    FinalPrice = addOn.FinalPrice,
+                    Status = addOn.Status
+                };
+            }).ToList();
+
+            return new BookingResponseDTO
+            {
+                BookingId = booking.BookingId,
+                CustomerName = booking.Customer?.FullName ?? booking.GuestName,
+                CustomerPhone = booking.Customer?.PhoneNumber ?? booking.GuestPhone,
+                LicensePlate = booking.Vehicle?.LicensePlate
+                    ?? booking.GuestLicensePlate
+                    ?? string.Empty,
+                VehicleType = booking.Vehicle?.VehicleType
+                    ?? booking.GuestVehicleType
+                    ?? string.Empty,
+                Status = booking.Status ?? string.Empty,
+                SlotId = booking.SlotId,
+                ServiceId = booking.ServiceId,
+                ServiceName = booking.Service?.ServiceName,
+                BookingDate = booking.BookingDate,
+                OriginalPrice = booking.OriginalPrice,
+                FinalPrice = booking.FinalPrice,
+                PromotionId = booking.PromotionId,
+                PromoCode = booking.Promotion?.PromoCode,
+                RedemptionId = redemption?.RedemptionId,
+                AppliedReward = appliedReward,
+                AddOns = addOns
+            };
         }
     }
 }

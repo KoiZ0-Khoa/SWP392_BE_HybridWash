@@ -25,6 +25,14 @@ namespace HybridWash.Repositories.Implementations
             return await _context.Bookings
                 .Include(b => b.Customer)
                 .Include(b => b.Vehicle)
+                .Include(b => b.Service)
+                .Include(b => b.Slot)
+                .Include(b => b.Promotion)
+                .Include(b => b.BookingAddOns)
+                    .ThenInclude(addOn => addOn.Service)
+                .Include(b => b.RewardRedemptions)
+                    .ThenInclude(redemption => redemption.Reward)
+                        .ThenInclude(reward => reward.Service)
                 .Where(b => b.BookingDate == date)
                 .OrderBy(b => b.SlotId)
                 .ToListAsync();
@@ -41,6 +49,7 @@ namespace HybridWash.Repositories.Implementations
             return await _context.Bookings
                 .Include(b => b.Vehicle)
                 .Include(b => b.BookingAddOns)
+                    .ThenInclude(addOn => addOn.Service)
                 .Include(b => b.Slot)
                 .FirstOrDefaultAsync(b => b.BookingId == bookingId);
         }
