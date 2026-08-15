@@ -116,6 +116,8 @@ namespace HybridWash.Repositories.Implementations
                 .Include(b => b.Service)
                 .Include(b => b.Slot)
                 .Include(b => b.Staff)
+                .Include(b => b.ParkingReceipt)
+                    .ThenInclude(p => p.IssueStaff)
                 .Include(b => b.Promotion)
                 .Include(b => b.BookingAddOns)
                     .ThenInclude(addOn => addOn.Service)

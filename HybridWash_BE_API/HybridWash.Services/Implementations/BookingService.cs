@@ -539,6 +539,17 @@ namespace HybridWash.Services.Implementations
             QrCode = b.QrCode,
             IncidentImage1 = b.IncidentImage1,
             IncidentImage2 = b.IncidentImage2,
+            ParkingReceipt = b.ParkingReceipt == null ? null : new ParkingReceiptDto
+            {
+                ReceiptId = b.ParkingReceipt.ReceiptId,
+                BookingId = b.ParkingReceipt.BookingId,
+                IssueStaffId = b.ParkingReceipt.IssueStaffId,
+                IssueStaffName = b.ParkingReceipt.IssueStaff?.FullName,
+                Status = b.ParkingReceipt.Status,
+                IssuedAt = b.ParkingReceipt.IssuedAt,
+                IsCustomerLeaving = b.ParkingReceipt.IsCustomerLeaving ?? false,
+                CustomerSignature = b.ParkingReceipt.CustomerSignature
+            },
             CreatedAt = b.CreatedAt
         };
 
