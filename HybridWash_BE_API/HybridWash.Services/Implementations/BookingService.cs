@@ -107,9 +107,9 @@ namespace HybridWash.Services.Implementations
 
             // --- Duplicate check ---
             var duplicate = await _bookingRepo
-                .HasDuplicateBookingAsync(dto.CustomerId, dto.SlotId, dto.BookingDate, dto.GuestPhone);
+                .HasDuplicateBookingAsync(dto.CustomerId, dto.SlotId, dto.BookingDate, dto.GuestPhone, dto.VehicleId, dto.GuestLicensePlate);
             if (duplicate)
-                throw new Exception("You already have a booking for this date and slot");
+                throw new Exception("You already have a booking for this specific vehicle in this slot on this date");
 
             var benefit = await ResolveBenefitAsync(dto, service.Price, customer);
 

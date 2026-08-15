@@ -59,6 +59,8 @@ namespace HybridWash_BE_API
 
             builder.Services.AddScoped<IBookingRepository, BookingRepository>();
             builder.Services.AddScoped<IBookingService, BookingService>();
+            builder.Services.AddScoped<IIncidentReportRepository, IncidentReportRepository>();
+            builder.Services.AddScoped<IIncidentReportService, IncidentReportService>();
             builder.Services.AddScoped<IEmailService, EmailService>();
 
             // AWS S3

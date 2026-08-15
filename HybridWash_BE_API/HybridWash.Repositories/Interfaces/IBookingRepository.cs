@@ -8,7 +8,7 @@ namespace HybridWash.Repositories.Interfaces
         Task<Vehicle?> GetVehicleByIdAsync(int vehicleId);
         // Conflict checks
         Task<int> CountBookingsInSlotByTypeAsync(int slotId, DateOnly bookingDate, string vehicleType);
-        Task<bool> HasDuplicateBookingAsync(int? customerId, int slotId, DateOnly bookingDate, string? guestPhone);
+        Task<bool> HasDuplicateBookingAsync(int? customerId, int slotId, DateOnly bookingDate, string? guestPhone, int? vehicleId, string? guestLicensePlate);
         // CRUD
         Task<Booking> CreateBookingAsync(
             Booking booking,
