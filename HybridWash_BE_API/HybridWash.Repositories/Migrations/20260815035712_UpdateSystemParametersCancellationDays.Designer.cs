@@ -4,6 +4,7 @@ using HybridWash.Repositories.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HybridWash.Repositories.Migrations
 {
     [DbContext(typeof(AutowashContext))]
-    partial class AutowashContextModelSnapshot : ModelSnapshot
+    [Migration("20260815035712_UpdateSystemParametersCancellationDays")]
+    partial class UpdateSystemParametersCancellationDays
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -319,59 +322,6 @@ namespace HybridWash.Repositories.Migrations
                     b.HasIndex("CustomerId", "ReviewedAt");
 
                     b.ToTable("CustomerTierHistory", (string)null);
-                });
-
-            modelBuilder.Entity("HybridWash.Entities.Models.IncidentReport", b =>
-                {
-                    b.Property<int>("ReportId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReportId"));
-
-                    b.Property<int>("BookingId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime")
-                        .HasDefaultValueSql("(getdate())");
-
-                    b.Property<int?>("CustomerId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("CustomerNote")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<string>("ManagerNote")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<string>("ReportedImage1")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ReportedImage2")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("ResolvedAt")
-                        .HasColumnType("datetime");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)")
-                        .HasDefaultValue("Pending");
-
-                    b.HasKey("ReportId");
-
-                    b.HasIndex("BookingId");
-
-                    b.HasIndex("CustomerId");
-
-                    b.ToTable("IncidentReports");
                 });
 
             modelBuilder.Entity("HybridWash.Entities.Models.ParkingReceipt", b =>
@@ -737,9 +687,6 @@ namespace HybridWash.Repositories.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
                         .HasDefaultValueSql("(getdate())");
-
-                    b.Property<string>("Email")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FullName")
                         .IsRequired()
@@ -1117,24 +1064,6 @@ namespace HybridWash.Repositories.Migrations
                     b.Navigation("Customer");
                 });
 
-            modelBuilder.Entity("HybridWash.Entities.Models.IncidentReport", b =>
-                {
-                    b.HasOne("HybridWash.Entities.Models.Booking", "Booking")
-                        .WithMany("IncidentReports")
-                        .HasForeignKey("BookingId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("HybridWash.Entities.Models.Customer", "Customer")
-                        .WithMany("IncidentReports")
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Booking");
-
-                    b.Navigation("Customer");
-                });
-
             modelBuilder.Entity("HybridWash.Entities.Models.ParkingReceipt", b =>
                 {
                     b.HasOne("HybridWash.Entities.Models.Booking", "Booking")
@@ -1247,8 +1176,6 @@ namespace HybridWash.Repositories.Migrations
                 {
                     b.Navigation("BookingAddOns");
 
-                    b.Navigation("IncidentReports");
-
                     b.Navigation("ParkingReceipt");
 
                     b.Navigation("PointLedgers");
@@ -1259,8 +1186,6 @@ namespace HybridWash.Repositories.Migrations
             modelBuilder.Entity("HybridWash.Entities.Models.Customer", b =>
                 {
                     b.Navigation("Bookings");
-
-                    b.Navigation("IncidentReports");
 
                     b.Navigation("PointLedgers");
 

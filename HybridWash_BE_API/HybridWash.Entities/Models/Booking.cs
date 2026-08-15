@@ -33,6 +33,8 @@ public partial class Booking
 
     public decimal? FinalPrice { get; set; }
 
+    public decimal? DepositAmount { get; set; }
+
     public DateTime? ActualWashTime { get; set; }
 
     public string? IncidentImage1 { get; set; }
@@ -58,6 +60,8 @@ public partial class Booking
     public virtual Promotion? Promotion { get; set; }
 
     public virtual ICollection<RewardRedemption> RewardRedemptions { get; set; } = new List<RewardRedemption>();
+
+    public virtual ICollection<IncidentReport> IncidentReports { get; set; } = new List<IncidentReport>();
 
     public virtual Service Service { get; set; } = null!;
 

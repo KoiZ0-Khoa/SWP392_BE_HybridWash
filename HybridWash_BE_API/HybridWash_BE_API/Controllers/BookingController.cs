@@ -110,8 +110,8 @@ namespace HybridWash_BE_API.Controllers
         {
             try
             {
-                await _bookingService.CancelBookingAsync(bookingId);
-                return Ok(new { Success = true, Message = "Booking cancelled successfully" });
+                var message = await _bookingService.CancelBookingAsync(bookingId);
+                return Ok(new { Success = true, Message = message });
             }
             catch (Exception ex)
             {

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -18,6 +18,8 @@ namespace HybridWash.Repositories.Migrations
                 maxLength: 100,
                 nullable: false,
                 defaultValue: "");
+
+            migrationBuilder.Sql("UPDATE [Customers] SET [Email] = CONCAT('customer', [CustomerId], '@hybridwash.com') WHERE [Email] = '' OR [Email] IS NULL;");
 
             migrationBuilder.CreateIndex(
                 name: "UQ__Customer__Email",

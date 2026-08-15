@@ -31,6 +31,8 @@ public partial class Customer
 
     public virtual ICollection<RewardRedemption> RewardRedemptions { get; set; } = new List<RewardRedemption>();
 
+    public virtual ICollection<IncidentReport> IncidentReports { get; set; } = new List<IncidentReport>();
+
     public virtual ICollection<CustomerTierHistory> TierHistories { get; set; } = new List<CustomerTierHistory>();
 
     public virtual ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
