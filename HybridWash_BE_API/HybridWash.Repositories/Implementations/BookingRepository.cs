@@ -40,7 +40,7 @@ namespace HybridWash.Repositories.Implementations
                               ));
         }
 
-        public async Task<bool> HasDuplicateBookingAsync(int? customerId, int slotId, DateOnly bookingDate, string? guestPhone)
+        public async Task<bool> HasDuplicateBookingAsync(int? customerId, int slotId, DateOnly bookingDate, string? guestPhone, int? vehicleId, string? guestLicensePlate)
         {
             if (customerId.HasValue)
             {
@@ -48,6 +48,7 @@ namespace HybridWash.Repositories.Implementations
                     b.CustomerId == customerId
                     && b.SlotId == slotId
                     && b.BookingDate == bookingDate
+                    && b.VehicleId == vehicleId
                     && b.Status != "Cancelled"
                     && b.Status != "NoShow");
             }
@@ -57,6 +58,7 @@ namespace HybridWash.Repositories.Implementations
                     b.GuestPhone == guestPhone
                     && b.SlotId == slotId
                     && b.BookingDate == bookingDate
+                    && b.GuestLicensePlate == guestLicensePlate
                     && b.Status != "Cancelled"
                     && b.Status != "NoShow");
             }
@@ -116,6 +118,8 @@ namespace HybridWash.Repositories.Implementations
                 .Include(b => b.Service)
                 .Include(b => b.Slot)
                 .Include(b => b.Staff)
+                .Include(b => b.ParkingReceipt)
+                    .ThenInclude(p => p.IssueStaff)
                 .Include(b => b.Promotion)
                 .Include(b => b.BookingAddOns)
                     .ThenInclude(addOn => addOn.Service)

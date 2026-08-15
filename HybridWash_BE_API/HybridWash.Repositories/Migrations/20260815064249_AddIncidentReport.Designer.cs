@@ -4,6 +4,7 @@ using HybridWash.Repositories.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HybridWash.Repositories.Migrations
 {
     [DbContext(typeof(AutowashContext))]
-    partial class AutowashContextModelSnapshot : ModelSnapshot
+    [Migration("20260815064249_AddIncidentReport")]
+    partial class AddIncidentReport
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -45,9 +48,6 @@ namespace HybridWash.Repositories.Migrations
                     b.Property<int?>("CustomerId")
                         .HasColumnType("int")
                         .HasColumnName("CustomerID");
-
-                    b.Property<decimal?>("DepositAmount")
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal?>("FinalPrice")
                         .ValueGeneratedOnAdd()
@@ -775,44 +775,6 @@ namespace HybridWash.Repositories.Migrations
                         .IsUnique();
 
                     b.ToTable("Staff");
-                });
-
-            modelBuilder.Entity("HybridWash.Entities.Models.SystemParameter", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("BikeDepositAmount")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<int>("CancellationRefundDays")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("CarDepositPercentage")
-                        .HasColumnType("decimal(5, 2)");
-
-                    b.Property<string>("ContactPhone")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("SystemParameters", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            BikeDepositAmount = 10000m,
-                            CancellationRefundDays = 1,
-                            CarDepositPercentage = 10m,
-                            ContactPhone = "19001560"
-                        });
                 });
 
             modelBuilder.Entity("HybridWash.Entities.Models.TierRule", b =>

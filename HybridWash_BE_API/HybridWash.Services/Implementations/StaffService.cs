@@ -136,7 +136,8 @@ namespace HybridWash.Services.Implementations
                 IssueStaffId = staffId,
                 Status = "Issued",
                 IssuedAt = DateTime.UtcNow,
-                IsCustomerLeaving = request.IsCustomerLeaving
+                IsCustomerLeaving = request.IsCustomerLeaving,
+                CustomerSignature = request.CustomerSignature
             };
 
             await _staffRepository.AddParkingReceiptAsync(receipt);

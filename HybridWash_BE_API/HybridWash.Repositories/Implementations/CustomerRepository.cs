@@ -20,5 +20,15 @@ namespace HybridWash.Repositories.Implementations
                 .Where(v => v.CustomerId == customerId)
                 .ToListAsync();
         }
+
+        public async Task AddVehicleAsync(Vehicle vehicle)
+        {
+            await _context.Vehicles.AddAsync(vehicle);
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
     }
 }

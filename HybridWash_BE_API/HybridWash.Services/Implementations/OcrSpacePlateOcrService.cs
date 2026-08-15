@@ -18,8 +18,8 @@ namespace HybridWash.Services.Implementations
             ILogger<OcrSpacePlateOcrService> logger)
         {
             _httpClient = httpClient;
-            _apiKey = configuration["OcrSpace:ApiKey"]
-                ?? throw new InvalidOperationException("OcrSpace:ApiKey is not configured in appsettings.json");
+            // Fallback to the public test key "helloworld" if not configured in appsettings.json
+            _apiKey = configuration["OcrSpace:ApiKey"] ?? "helloworld";
             _logger = logger;
         }
 

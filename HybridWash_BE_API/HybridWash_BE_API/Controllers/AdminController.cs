@@ -31,5 +31,19 @@ namespace HybridWash_BE_API.Controllers
                 return BadRequest(new { Message = ex.Message });
             }
         }
+        [Authorize(Roles = "Admin")]
+        [HttpGet("users")]
+        public async Task<IActionResult> GetUsers()
+        {
+            try
+            {
+                var users = await _authService.GetAllUsersAsync();
+                return Ok(new { Success = true, Data = users });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
     }
 }

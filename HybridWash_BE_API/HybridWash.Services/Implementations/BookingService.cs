@@ -110,9 +110,9 @@ namespace HybridWash.Services.Implementations
 
             // --- Duplicate check ---
             var duplicate = await _bookingRepo
-                .HasDuplicateBookingAsync(dto.CustomerId, dto.SlotId, dto.BookingDate, dto.GuestPhone);
+                .HasDuplicateBookingAsync(dto.CustomerId, dto.SlotId, dto.BookingDate, dto.GuestPhone, dto.VehicleId, dto.GuestLicensePlate);
             if (duplicate)
-                throw new Exception("You already have a booking for this date and slot");
+                throw new Exception("You already have a booking for this specific vehicle in this slot on this date");
 
             var benefit = await ResolveBenefitAsync(dto, service.Price, customer);
 
@@ -124,7 +124,7 @@ namespace HybridWash.Services.Implementations
                 GuestName = dto.GuestName,
                 GuestPhone = dto.GuestPhone,
                 GuestLicensePlate = dto.GuestLicensePlate,
-                GuestVehicleType = dto.GuestVehicleType,
+                GuestVehicleType = vehicleType,
                 ServiceId = dto.ServiceId,
                 SlotId = dto.SlotId,
                 BookingDate = dto.BookingDate,
@@ -557,6 +557,17 @@ namespace HybridWash.Services.Implementations
             QrCode = b.QrCode,
             IncidentImage1 = b.IncidentImage1,
             IncidentImage2 = b.IncidentImage2,
+            ParkingReceipt = b.ParkingReceipt == null ? null : new ParkingReceiptDto
+            {
+                ReceiptId = b.ParkingReceipt.ReceiptId,
+                BookingId = b.ParkingReceipt.BookingId,
+                IssueStaffId = b.ParkingReceipt.IssueStaffId,
+                IssueStaffName = b.ParkingReceipt.IssueStaff?.FullName,
+                Status = b.ParkingReceipt.Status,
+                IssuedAt = b.ParkingReceipt.IssuedAt,
+                IsCustomerLeaving = b.ParkingReceipt.IsCustomerLeaving ?? false,
+                CustomerSignature = b.ParkingReceipt.CustomerSignature
+            },
             CreatedAt = b.CreatedAt
         };
 

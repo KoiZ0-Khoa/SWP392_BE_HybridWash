@@ -32,7 +32,9 @@ namespace HybridWash_BE_API.Controllers
                     return NotFound(new { Message = ex.Message });
                 if (ex.Message.Contains("fully booked") || ex.Message.Contains("already have"))
                     return Conflict(new { Message = ex.Message });
-                return BadRequest(new { Message = ex.Message });
+                
+                var errorMsg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return BadRequest(new { Message = errorMsg });
             }
         }
 

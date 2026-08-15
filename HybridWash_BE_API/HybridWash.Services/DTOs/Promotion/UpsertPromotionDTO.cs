@@ -18,10 +18,10 @@ public class UpsertPromotionDTO
 
     public string? DiscountType { get; set; }
 
-    [Range(typeof(decimal), "0.01", "9999999999999999")]
+    [Range(typeof(decimal), "0", "9999999999999999")]
     public decimal? DiscountValue { get; set; }
 
-    [Range(typeof(decimal), "0.01", "9999999999999999")]
+    [Range(typeof(decimal), "0", "9999999999999999")]
     public decimal? MaxDiscount { get; set; }
 
     public int? ServiceId { get; set; }

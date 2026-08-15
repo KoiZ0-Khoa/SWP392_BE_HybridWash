@@ -36,5 +36,30 @@ namespace HybridWash_BE_API.Controllers
                 return BadRequest(new { Message = ex.Message });
             }
         }
+
+        [HttpPost("vehicles")]
+        public async Task<IActionResult> AddVehicle([FromBody] HybridWash.Services.DTOs.AddVehicleRequestDTO request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var customerIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(customerIdStr) || !int.TryParse(customerIdStr, out int customerId))
+                {
+                    return Unauthorized(new { Message = "Customer ID không hợp lệ." });
+                }
+
+                var vehicle = await _customerService.AddVehicleAsync(customerId, request);
+                return Ok(new { Success = true, Message = "Thêm xe thành công.", Data = vehicle });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
     }
 }

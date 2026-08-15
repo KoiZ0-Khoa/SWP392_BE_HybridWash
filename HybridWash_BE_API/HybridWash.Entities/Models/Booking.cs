@@ -61,6 +61,8 @@ public partial class Booking
 
     public virtual ICollection<RewardRedemption> RewardRedemptions { get; set; } = new List<RewardRedemption>();
 
+    public virtual ICollection<IncidentReport> IncidentReports { get; set; } = new List<IncidentReport>();
+
     public virtual Service Service { get; set; } = null!;
 
     public virtual TimeSlot Slot { get; set; } = null!;

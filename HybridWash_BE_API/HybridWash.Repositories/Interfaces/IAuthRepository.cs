@@ -18,4 +18,7 @@ public interface IAuthRepository
     
     Task UpdateCustomerAsync(Customer customer);
     Task UpdateStaffAsync(Staff staff);
+    
+    Task<List<Customer>> GetAllCustomersAsync();
+    Task<List<Staff>> GetAllStaffsAsync();
 }
