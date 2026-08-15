@@ -5,5 +5,7 @@ namespace HybridWash.Repositories.Interfaces
     public interface ICustomerRepository
     {
         Task<IEnumerable<Vehicle>> GetCustomerVehiclesAsync(int customerId);
+        Task AddVehicleAsync(Vehicle vehicle);
+        Task SaveChangesAsync();
     }
 }

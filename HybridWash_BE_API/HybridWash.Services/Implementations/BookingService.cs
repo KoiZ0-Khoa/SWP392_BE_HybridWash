@@ -121,7 +121,7 @@ namespace HybridWash.Services.Implementations
                 GuestName = dto.GuestName,
                 GuestPhone = dto.GuestPhone,
                 GuestLicensePlate = dto.GuestLicensePlate,
-                GuestVehicleType = dto.GuestVehicleType,
+                GuestVehicleType = vehicleType,
                 ServiceId = dto.ServiceId,
                 SlotId = dto.SlotId,
                 BookingDate = dto.BookingDate,

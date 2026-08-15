@@ -25,12 +25,11 @@ namespace HybridWash.Services.Implementations
             var fileExtension = Path.GetExtension(file.FileName);
             var key = $"{prefix}/{Guid.NewGuid()}{fileExtension}";
 
-            using var newMemoryStream = new MemoryStream();
-            await file.CopyToAsync(newMemoryStream);
+            using var stream = file.OpenReadStream();
 
             var uploadRequest = new TransferUtilityUploadRequest
             {
-                InputStream = newMemoryStream,
+                InputStream = stream,
                 Key = key,
                 BucketName = bucketName,
                 ContentType = file.ContentType
@@ -40,8 +39,35 @@ namespace HybridWash.Services.Implementations
             await fileTransferUtility.UploadAsync(uploadRequest);
 
             // Construct public URL. This assumes the bucket objects are publicly accessible.
-            // If they are not, you would need to generate a PreSignedURL instead.
-            return $"https://{bucketName}.s3.{_s3Client.Config.RegionEndpoint.SystemName}.amazonaws.com/{key}";
+            var region = _s3Client.Config.RegionEndpoint?.SystemName ?? "ap-southeast-1";
+            return $"https://{bucketName}.s3.{region}.amazonaws.com/{key}";
+        }
+
+        public async Task<bool> DeleteFileAsync(string fileUrl, string bucketName)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(fileUrl)) return false;
+                
+                var uri = new Uri(fileUrl);
+                // URL structure: https://{bucketName}.s3.{region}.amazonaws.com/{key}
+                var key = uri.AbsolutePath.TrimStart('/');
+
+                var deleteRequest = new Amazon.S3.Model.DeleteObjectRequest
+                {
+                    BucketName = bucketName,
+                    Key = key
+                };
+
+                var response = await _s3Client.DeleteObjectAsync(deleteRequest);
+                return response.HttpStatusCode == System.Net.HttpStatusCode.NoContent || 
+                       response.HttpStatusCode == System.Net.HttpStatusCode.OK;
+            }
+            catch (Exception)
+            {
+                // Log exception if needed
+                return false;
+            }
         }
     }
 }
