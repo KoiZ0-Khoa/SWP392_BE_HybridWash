@@ -1,5 +1,7 @@
 using Amazon.S3;
+using Amazon.S3.Model;
 using Amazon.S3.Transfer;
+using HybridWash.Services.DTOs.Storage;
 using HybridWash.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using System;
@@ -43,6 +45,46 @@ namespace HybridWash.Services.Implementations
             return $"https://{bucketName}.s3.{region}.amazonaws.com/{key}";
         }
 
+        public async Task<S3FileResult> DownloadFileAsync(
+            string fileUrlOrKey,
+            string bucketName,
+            CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(fileUrlOrKey))
+                throw new ArgumentException("S3 file URL or key is required.");
+            if (string.IsNullOrWhiteSpace(bucketName))
+                throw new ArgumentException("S3 bucket name is required.");
+
+            var key = ExtractObjectKey(fileUrlOrKey);
+
+            try
+            {
+                using var response = await _s3Client.GetObjectAsync(
+                    new GetObjectRequest
+                    {
+                        BucketName = bucketName,
+                        Key = key
+                    },
+                    cancellationToken);
+
+                using var memoryStream = new MemoryStream();
+                await response.ResponseStream.CopyToAsync(
+                    memoryStream,
+                    cancellationToken);
+
+                return new S3FileResult(
+                    memoryStream.ToArray(),
+                    string.IsNullOrWhiteSpace(response.Headers.ContentType)
+                        ? "application/octet-stream"
+                        : response.Headers.ContentType);
+            }
+            catch (AmazonS3Exception ex)
+                when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                throw new FileNotFoundException("S3 object not found.", ex);
+            }
+        }
+
         public async Task<bool> DeleteFileAsync(string fileUrl, string bucketName)
         {
             try
@@ -68,6 +110,24 @@ namespace HybridWash.Services.Implementations
                 // Log exception if needed
                 return false;
             }
+        }
+
+        private static string ExtractObjectKey(string fileUrlOrKey)
+        {
+            var value = fileUrlOrKey.Trim();
+            if (Uri.TryCreate(value, UriKind.Absolute, out var uri)
+                && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+            {
+                value = Uri.UnescapeDataString(uri.AbsolutePath.TrimStart('/'));
+            }
+            else
+            {
+                value = value.TrimStart('/');
+            }
+
+            return string.IsNullOrWhiteSpace(value)
+                ? throw new ArgumentException("S3 object key is invalid.")
+                : value;
         }
     }
 }

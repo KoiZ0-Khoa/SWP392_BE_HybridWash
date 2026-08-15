@@ -539,6 +539,12 @@ namespace HybridWash.Services.Implementations
             QrCode = b.QrCode,
             IncidentImage1 = b.IncidentImage1,
             IncidentImage2 = b.IncidentImage2,
+            IncidentImage1ApiPath = string.IsNullOrWhiteSpace(b.IncidentImage1)
+                ? null
+                : $"/api/Booking/{b.BookingId}/incident-images/1",
+            IncidentImage2ApiPath = string.IsNullOrWhiteSpace(b.IncidentImage2)
+                ? null
+                : $"/api/Booking/{b.BookingId}/incident-images/2",
             ParkingReceipt = b.ParkingReceipt == null ? null : new ParkingReceiptDto
             {
                 ReceiptId = b.ParkingReceipt.ReceiptId,

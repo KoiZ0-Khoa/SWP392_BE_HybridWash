@@ -5,6 +5,7 @@ namespace HybridWash.Services.Interfaces;
 public interface ITierService
 {
     Task<IReadOnlyList<TierRuleDTO>> GetRulesAsync();
+    Task<IReadOnlyList<PublicTierRuleDTO>> GetPublicRulesAsync();
     Task<TierRuleDTO?> UpdateRuleAsync(string tierName, UpdateTierRuleDTO request);
     Task ReviewAfterCompletedBookingAsync(int customerId, DateTime reviewedAt);
     Task<TierReviewResultDTO> RunMonthlyReviewAsync(DateTime reviewedAt, bool onlyDueCustomers);

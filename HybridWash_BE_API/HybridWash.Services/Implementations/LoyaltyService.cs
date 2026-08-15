@@ -47,6 +47,7 @@ public class LoyaltyService : ILoyaltyService
             BookingWindowDays = progress.BookingWindowDays,
             PointMultiplier = progress.PointMultiplier,
             NextTier = progress.NextTier,
+            QualificationMode = progress.QualificationMode,
             SpendRequiredForNextTier = progress.SpendRequiredForNextTier,
             VisitsRequiredForNextTier = progress.VisitsRequiredForNextTier
         };
