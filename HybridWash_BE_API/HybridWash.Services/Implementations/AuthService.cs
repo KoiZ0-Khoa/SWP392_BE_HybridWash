@@ -197,5 +197,49 @@ namespace HybridWash.Services.Implementations
             _memoryCache.Remove($"OTP_{request.Email}");
             return true;
         }
+
+        public async Task<UserListDto> GetAllUsersAsync()
+        {
+            var customers = await _authRepository.GetAllCustomersAsync();
+            var staffs = await _authRepository.GetAllStaffsAsync();
+
+            var result = new UserListDto();
+
+            foreach (var c in customers)
+            {
+                result.Customers.Add(new UserDto
+                {
+                    Id = c.CustomerId,
+                    FullName = c.FullName,
+                    PhoneNumber = c.PhoneNumber,
+                    Role = "Customer",
+                    Tier = c.CurrentTier,
+                    CreatedAt = c.CreatedAt
+                });
+            }
+
+            foreach (var s in staffs)
+            {
+                var dto = new UserDto
+                {
+                    Id = s.StaffId,
+                    FullName = s.FullName,
+                    PhoneNumber = s.PhoneNumber,
+                    Role = s.Role,
+                    CreatedAt = s.CreatedAt
+                };
+
+                if (s.Role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+                {
+                    result.Admins.Add(dto);
+                }
+                else
+                {
+                    result.Staffs.Add(dto);
+                }
+            }
+
+            return result;
+        }
     }
 }

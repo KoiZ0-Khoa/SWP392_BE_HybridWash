@@ -73,4 +73,14 @@ public class AuthRepository : IAuthRepository
         _context.Staff.Update(staff);
         await _context.SaveChangesAsync();
     }
+
+    public async Task<List<Customer>> GetAllCustomersAsync()
+    {
+        return await _context.Customers.OrderByDescending(c => c.CreatedAt).ToListAsync();
+    }
+
+    public async Task<List<Staff>> GetAllStaffsAsync()
+    {
+        return await _context.Staff.OrderByDescending(s => s.CreatedAt).ToListAsync();
+    }
 }

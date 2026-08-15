@@ -10,5 +10,6 @@ namespace HybridWash.Services.Interfaces
         Task<AuthResponseDTO> CreateStaffAsync(CreateStaffRequestDTO request);
         Task<string> ForgotPasswordAsync(ForgotPasswordRequestDTO request);
         Task<bool> ResetPasswordAsync(ResetPasswordRequestDTO request);
+        Task<UserListDto> GetAllUsersAsync();
     }
 }
