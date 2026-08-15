@@ -4,6 +4,7 @@ using HybridWash.Repositories.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HybridWash.Repositories.Migrations
 {
     [DbContext(typeof(AutowashContext))]
-    partial class AutowashContextModelSnapshot : ModelSnapshot
+    [Migration("20260815034629_AddSystemParametersAndDeposit")]
+    partial class AddSystemParametersAndDeposit
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -47,7 +50,7 @@ namespace HybridWash.Repositories.Migrations
                         .HasColumnName("CustomerID");
 
                     b.Property<decimal?>("DepositAmount")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<decimal?>("FinalPrice")
                         .ValueGeneratedOnAdd()
@@ -732,9 +735,6 @@ namespace HybridWash.Repositories.Migrations
                     b.Property<decimal>("BikeDepositAmount")
                         .HasColumnType("decimal(18, 2)");
 
-                    b.Property<int>("CancellationRefundDays")
-                        .HasColumnType("int");
-
                     b.Property<decimal>("CarDepositPercentage")
                         .HasColumnType("decimal(5, 2)");
 
@@ -753,7 +753,6 @@ namespace HybridWash.Repositories.Migrations
                         {
                             Id = 1,
                             BikeDepositAmount = 10000m,
-                            CancellationRefundDays = 1,
                             CarDepositPercentage = 10m,
                             ContactPhone = "19001560"
                         });

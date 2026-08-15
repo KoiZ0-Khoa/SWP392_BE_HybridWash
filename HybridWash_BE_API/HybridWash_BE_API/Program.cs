@@ -60,6 +60,9 @@ namespace HybridWash_BE_API
             builder.Services.AddScoped<IBookingRepository, BookingRepository>();
             builder.Services.AddScoped<IBookingService, BookingService>();
             builder.Services.AddScoped<IEmailService, EmailService>();
+            builder.Services.AddScoped<ISystemParameterRepository, SystemParameterRepository>();
+            builder.Services.AddScoped<ISystemParameterService, SystemParameterService>();
+            builder.Services.AddScoped<IPaymentService, PaymentService>();
 
             // AWS S3
             // AccessKeyId/SecretAccessKey are stored in .NET User Secrets for local development.

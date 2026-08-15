@@ -33,6 +33,8 @@ public partial class Booking
 
     public decimal? FinalPrice { get; set; }
 
+    public decimal? DepositAmount { get; set; }
+
     public DateTime? ActualWashTime { get; set; }
 
     public string? IncidentImage1 { get; set; }

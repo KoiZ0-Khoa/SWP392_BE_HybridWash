@@ -17,6 +17,7 @@ namespace HybridWash.Services.Implementations
         private readonly ILoyaltyService _loyaltyService;
         private readonly ITierService _tierService;
         private readonly IPlateOcrService _plateOcrService;
+        private readonly ISystemParameterService _systemParameterService;
 
         public BookingService(
             IBookingRepository bookingRepo,
@@ -26,7 +27,8 @@ namespace HybridWash.Services.Implementations
             IRewardRepository rewardRepo,
             ILoyaltyService loyaltyService,
             ITierService tierService,
-            IPlateOcrService plateOcrService)
+            IPlateOcrService plateOcrService,
+            ISystemParameterService systemParameterService)
         {
             _bookingRepo = bookingRepo;
             _serviceRepo = serviceRepo;
@@ -36,6 +38,7 @@ namespace HybridWash.Services.Implementations
             _loyaltyService = loyaltyService;
             _tierService = tierService;
             _plateOcrService = plateOcrService;
+            _systemParameterService = systemParameterService;
         }
 
         public async Task<BookingDto> CreateBookingAsync(CreateBookingDto dto)
@@ -379,18 +382,31 @@ namespace HybridWash.Services.Implementations
         }
 
         // ========== CANCEL ==========
-        public async Task CancelBookingAsync(int bookingId)
+        public async Task<string> CancelBookingAsync(int bookingId)
         {
             var booking = await _bookingRepo.GetBookingByIdWithDetailsAsync(bookingId);
             if (booking == null)
                 throw new Exception("Booking not found");
-            if (booking.Status != "Pending")
+            if (booking.Status != "Pending" && booking.Status != "Deposited")
                 throw new Exception($"Cannot cancel booking with status: {booking.Status}");
 
-            booking.Status = "Cancelled";
+            var systemParams = await _systemParameterService.GetSystemParameterAsync();
+            int daysUntilBooking = (booking.BookingDate.ToDateTime(TimeOnly.MinValue) - DateTime.UtcNow.Date).Days;
+            
+            bool canRefund = booking.Status == "Deposited" && daysUntilBooking >= systemParams.CancellationRefundDays;
+
+            booking.Status = canRefund ? "RefundPending" : "Cancelled";
             foreach (var addOn in booking.BookingAddOns)
                 addOn.Status = "Cancelled";
+                
             await _bookingRepo.SaveChangesAsync();
+            
+            if (canRefund)
+            {
+                return $"Booking cancelled successfully. Please contact {systemParams.ContactPhone} to receive your deposit refund.";
+            }
+            
+            return "Booking cancelled successfully.";
         }
 
         // ========== UPDATE STATUS ==========
@@ -402,8 +418,8 @@ namespace HybridWash.Services.Implementations
 
             var allowedStatuses = new[]
             {
-                "Pending", "Confirmed", "Washing", "Completed",
-                "CheckedOut", "Cancelled", "NoShow"
+                "Pending", "Deposited", "Confirmed", "Washing", "Completed",
+                "CheckedOut", "Cancelled", "RefundPending", "NoShow"
             };
             var normalizedStatus = allowedStatuses.FirstOrDefault(value =>
                 value.Equals(status?.Trim(), StringComparison.OrdinalIgnoreCase));
@@ -498,6 +514,7 @@ namespace HybridWash.Services.Implementations
             BookingDate = b.BookingDate,
             OriginalPrice = b.OriginalPrice,
             FinalPrice = b.FinalPrice,
+            DepositAmount = b.DepositAmount,
             PromotionId = b.PromotionId,
             RedemptionId = b.RewardRedemptions.FirstOrDefault()?.RedemptionId,
             AppliedReward = MapAppliedReward(b.RewardRedemptions),
@@ -526,6 +543,7 @@ namespace HybridWash.Services.Implementations
             BookingDate = b.BookingDate,
             OriginalPrice = b.OriginalPrice,
             FinalPrice = b.FinalPrice,
+            DepositAmount = b.DepositAmount,
             PromotionId = b.PromotionId,
             PromoCode = b.Promotion?.PromoCode,
             RedemptionId = b.RewardRedemptions.FirstOrDefault()?.RedemptionId,

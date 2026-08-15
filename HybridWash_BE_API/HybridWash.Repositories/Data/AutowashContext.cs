@@ -40,6 +40,8 @@ public partial class AutowashContext : DbContext
 
     public virtual DbSet<Vehicle> Vehicles { get; set; }
 
+    public virtual DbSet<SystemParameter> SystemParameters { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Booking>(entity =>
@@ -54,6 +56,8 @@ public partial class AutowashContext : DbContext
             entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
             entity.Property(e => e.FinalPrice)
                 .HasDefaultValue(0m)
+                .HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.DepositAmount)
                 .HasColumnType("decimal(18, 2)");
             entity.Property(e => e.GuestLicensePlate)
                 .HasMaxLength(20)
@@ -539,6 +543,25 @@ public partial class AutowashContext : DbContext
                 .HasForeignKey(d => d.CustomerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Vehicles__Custom__412EB0B6");
+        });
+
+        modelBuilder.Entity<SystemParameter>(entity =>
+        {
+            entity.ToTable("SystemParameters");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.BikeDepositAmount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.CarDepositPercentage).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.ContactPhone).HasMaxLength(20).IsUnicode(false);
+            
+            entity.HasData(
+                new SystemParameter
+                {
+                    Id = 1,
+                    BikeDepositAmount = 10000m,
+                    CarDepositPercentage = 10m,
+                    ContactPhone = "19001560",
+                    CancellationRefundDays = 1
+                });
         });
 
         OnModelCreatingPartial(modelBuilder);
