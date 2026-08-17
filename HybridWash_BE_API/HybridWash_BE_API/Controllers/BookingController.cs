@@ -138,21 +138,7 @@ namespace HybridWash_BE_API.Controllers
             }
         }
 
-        [HttpGet("admin")]
-        [Authorize(Roles = "Admin,Staff")]
-        public async Task<IActionResult> GetAdminBookings(
-            [FromQuery] AdminBookingQueryDto query)
-        {
-            try
-            {
-                var result = await _bookingService.GetAdminBookingsAsync(query);
-                return Ok(new { Success = true, Data = result });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { Message = ex.Message });
-            }
-        }
+
 
         [HttpPost("scan-plate")]
         [Authorize(Roles = "Admin,Staff")]

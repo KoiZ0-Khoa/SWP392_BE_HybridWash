@@ -17,12 +17,12 @@ namespace HybridWash_BE_API.Controllers
         }
 
         [HttpPost("deposit-qr/{bookingId}")]
-        public async Task<IActionResult> CreateDepositQr(int bookingId, [FromQuery] string returnUrl, [FromQuery] string cancelUrl)
+        public async Task<IActionResult> CreateDepositQr(int bookingId, [FromQuery] string? returnUrl = null, [FromQuery] string? cancelUrl = null)
         {
             try
             {
-                var checkoutUrl = await _paymentService.CreateDepositPaymentLinkAsync(bookingId, returnUrl, cancelUrl);
-                return Ok(new { CheckoutUrl = checkoutUrl });
+                var paymentInfo = await _paymentService.CreateDepositPaymentLinkAsync(bookingId, returnUrl, cancelUrl);
+                return Ok(paymentInfo);
             }
             catch (Exception ex)
             {
@@ -31,12 +31,12 @@ namespace HybridWash_BE_API.Controllers
         }
 
         [HttpPost("final-qr/{bookingId}")]
-        public async Task<IActionResult> CreateFinalQr(int bookingId, [FromQuery] string returnUrl, [FromQuery] string cancelUrl)
+        public async Task<IActionResult> CreateFinalQr(int bookingId, [FromQuery] string? returnUrl = null, [FromQuery] string? cancelUrl = null)
         {
             try
             {
-                var checkoutUrl = await _paymentService.CreateFinalPaymentLinkAsync(bookingId, returnUrl, cancelUrl);
-                return Ok(new { CheckoutUrl = checkoutUrl });
+                var paymentInfo = await _paymentService.CreateFinalPaymentLinkAsync(bookingId, returnUrl, cancelUrl);
+                return Ok(paymentInfo);
             }
             catch (Exception ex)
             {

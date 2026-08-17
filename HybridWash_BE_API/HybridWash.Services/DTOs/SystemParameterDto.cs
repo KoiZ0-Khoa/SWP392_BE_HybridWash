@@ -1,4 +1,4 @@
-namespace HybridWash.Entities.DTOs;
+namespace HybridWash.Services.DTOs;
 
 public class SystemParameterDto
 {

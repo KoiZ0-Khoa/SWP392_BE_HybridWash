@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
-using HybridWash.Entities.DTOs;
 using HybridWash.Repositories.Interfaces;
+using HybridWash.Services.DTOs;
 using HybridWash.Services.Interfaces;
 
 namespace HybridWash.Services.Implementations;

@@ -105,14 +105,22 @@ namespace HybridWash.Services.Implementations
                 }
             }
 
-            // Upload images to S3
+            // Upload images to S3 if provided
             var bucketName = _configuration["AWS:BucketName"] ?? "hybridwash-images";
-            var image1Url = await _awsS3Service.UploadFileAsync(request.IncidentImage1, bucketName, "incident-images");
-            var image2Url = await _awsS3Service.UploadFileAsync(request.IncidentImage2, bucketName, "incident-images");
+            if (request.IncidentImage1 != null && request.IncidentImage1.Length > 0)
+            {
+                booking.IncidentImage1 = await _awsS3Service.UploadFileAsync(request.IncidentImage1, bucketName, "incident-images");
+            }
 
-            booking.IncidentImage1 = image1Url;
-            booking.IncidentImage2 = image2Url;
-            booking.StaffNote = request.StaffNote;
+            if (request.IncidentImage2 != null && request.IncidentImage2.Length > 0)
+            {
+                booking.IncidentImage2 = await _awsS3Service.UploadFileAsync(request.IncidentImage2, bucketName, "incident-images");
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.StaffNote))
+            {
+                booking.StaffNote = request.StaffNote;
+            }
 
             booking.Status = "Washing";
             booking.ActualWashTime = DateTime.UtcNow;

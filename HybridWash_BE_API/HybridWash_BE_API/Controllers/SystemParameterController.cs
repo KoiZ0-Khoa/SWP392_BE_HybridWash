@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
-using HybridWash.Entities.DTOs;
+using HybridWash.Services.DTOs;
 using HybridWash.Services.Interfaces;
 
 namespace HybridWash_BE_API.Controllers
