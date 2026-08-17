@@ -13,6 +13,7 @@ using HybridWash.Services.Interfaces;
 using HybridWash_BE_API.Security;
 using Microsoft.EntityFrameworkCore;
 using HybridWash.Services.BackgroundServices;
+using HybridWash_BE_API.Hubs;
 
 namespace HybridWash_BE_API
 {
@@ -103,6 +104,18 @@ namespace HybridWash_BE_API
             builder.Services.AddSingleton<ITokenGenerator, JwtTokenGenerator>();
             builder.Services.AddLoyaltyModule();
 
+            builder.Services.AddSignalR();
+            
+            // CORS policy for SignalR
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("CorsPolicy", builder => builder
+                    .SetIsOriginAllowed((host) => true)
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials());
+            });
+
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
@@ -171,9 +184,12 @@ namespace HybridWash_BE_API
             // app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();
+            
+            app.UseCors("CorsPolicy");
 
 
             app.MapControllers();
+            app.MapHub<NotificationHub>("/notificationHub");
 
             app.Run();
         }
