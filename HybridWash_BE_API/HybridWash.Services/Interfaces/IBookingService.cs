@@ -12,6 +12,7 @@ namespace HybridWash.Services.Interfaces
         Task<BookingDetailDto> GetBookingByQrCodeAsync(string qrCode);
         Task<string> CancelBookingAsync(int bookingId);
         Task<BookingDto> UpdateBookingStatusAsync(int bookingId, string status);
+        Task<BookingReportResponseDto> GetBookingReportAsync(BookingReportQueryDto query);
         Task<PlateRecognitionResultDto> ScanPlateAsync(Stream imageStream);
     }
 }

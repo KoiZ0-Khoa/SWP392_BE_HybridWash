@@ -499,6 +499,101 @@ namespace HybridWash.Services.Implementations
             return MapToBookingDto(booking);
         }
 
+        // ========== BOOKING REPORT ==========
+        public async Task<BookingReportResponseDto> GetBookingReportAsync(BookingReportQueryDto q)
+        {
+            var now = DateTime.UtcNow.AddHours(7);
+            var today = DateOnly.FromDateTime(now);
+
+            DateOnly startDate;
+            DateOnly endDate;
+
+            if (q.Date.HasValue)
+            {
+                startDate = q.Date.Value;
+                endDate = q.Date.Value;
+            }
+            else
+            {
+                startDate = q.StartDate ?? today;
+                endDate = q.EndDate ?? (q.StartDate.HasValue ? q.StartDate.Value : today);
+            }
+
+            if (startDate > endDate)
+            {
+                var temp = startDate;
+                startDate = endDate;
+                endDate = temp;
+            }
+
+            var query = _bookingRepo.GetBookingsQueryable()
+                .Where(b => b.BookingDate >= startDate && b.BookingDate <= endDate);
+
+            if (!string.IsNullOrWhiteSpace(q.Status))
+            {
+                query = query.Where(b => b.Status == q.Status);
+            }
+
+            if (!string.IsNullOrWhiteSpace(q.VehicleType))
+            {
+                query = query.Where(b =>
+                    (b.Vehicle != null && b.Vehicle.VehicleType == q.VehicleType)
+                    || b.GuestVehicleType == q.VehicleType);
+            }
+
+            var bookings = await query
+                .OrderBy(b => b.BookingDate)
+                .ThenBy(b => b.Slot != null ? b.Slot.StartTime : default)
+                .ToListAsync();
+
+            int totalBookings = bookings.Count;
+            int completedBookings = 0;
+            int cancelledBookings = 0;
+            int inProgressOrDeposited = 0;
+            decimal completedRevenue = 0;
+            decimal depositRevenue = 0;
+
+            foreach (var b in bookings)
+            {
+                bool isCompleted = b.Status == "Completed" || b.Status == "CheckedOut";
+                bool isCancelled = b.Status == "Cancelled" || b.Status == "NoShow";
+                decimal bRevenue = isCompleted ? (b.FinalPrice ?? b.OriginalPrice ?? 0) : 0;
+                decimal bDeposit = (!isCompleted && !isCancelled && (b.Status == "Deposited" || b.Status == "Washing" || b.Status == "Pending" || b.Status == "Confirmed"))
+                    ? (b.DepositAmount ?? 0) : 0;
+
+                if (isCompleted)
+                {
+                    completedBookings++;
+                    completedRevenue += bRevenue;
+                }
+                else if (isCancelled)
+                {
+                    cancelledBookings++;
+                }
+                else
+                {
+                    inProgressOrDeposited++;
+                    depositRevenue += bDeposit;
+                }
+            }
+
+            decimal totalRevenue = completedRevenue + depositRevenue;
+
+            return new BookingReportResponseDto
+            {
+                StartDate = startDate,
+                EndDate = endDate,
+                TotalBookings = totalBookings,
+                CompletedBookings = completedBookings,
+                CancelledBookings = cancelledBookings,
+                InProgressOrDepositedBookings = inProgressOrDeposited,
+                TotalRevenue = totalRevenue,
+                CompletedRevenue = completedRevenue,
+                DepositRevenue = depositRevenue,
+                Bookings = bookings.Select(MapToBookingDto).ToList()
+            };
+        }
+
 
         // ========== MAPPING ==========
         private static BookingDto MapToBookingDto(Booking b) => new()

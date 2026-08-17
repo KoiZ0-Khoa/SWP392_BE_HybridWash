@@ -64,17 +64,41 @@ public class PaymentService : IPaymentService
             throw new Exception("System parameters not configured");
         }
 
+        decimal finalPrice = booking.FinalPrice ?? booking.OriginalPrice ?? 0;
         decimal depositAmount = 0;
 
         string vehicleType = booking.Vehicle?.VehicleType ?? booking.GuestVehicleType ?? "Bike";
 
         if (vehicleType.Equals("Car", StringComparison.OrdinalIgnoreCase))
         {
-            depositAmount = (booking.FinalPrice ?? booking.OriginalPrice ?? 0) * (systemParam.CarDepositPercentage / 100);
+            depositAmount = finalPrice * (systemParam.CarDepositPercentage / 100);
         }
         else
         {
-            depositAmount = systemParam.BikeDepositAmount;
+            depositAmount = finalPrice == 0 ? 0 : Math.Min(systemParam.BikeDepositAmount, finalPrice);
+        }
+
+  
+        if (depositAmount <= 0)
+        {
+            booking.DepositAmount = 0;
+            booking.Status = "Deposited";
+            await _context.SaveChangesAsync();
+
+            return new PaymentResponseDTO
+            {
+                OrderCode = 0,
+                Amount = 0,
+                Description = $"Deposit for booking {bookingId} (Free 0đ - Auto Deposited)",
+                AccountNumber = "",
+                AccountName = "",
+                Bin = "",
+                QrCode = "",
+                CheckoutUrl = "",
+                PaymentLinkId = null,
+                Status = "PAID",
+                QrImageUrl = ""
+            };
         }
 
         booking.DepositAmount = depositAmount;

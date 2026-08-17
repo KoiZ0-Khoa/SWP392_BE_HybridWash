@@ -138,7 +138,20 @@ namespace HybridWash_BE_API.Controllers
             }
         }
 
-
+        [HttpGet("report")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> GetBookingReport([FromQuery] BookingReportQueryDto query)
+        {
+            try
+            {
+                var result = await _bookingService.GetBookingReportAsync(query);
+                return Ok(new { Success = true, Data = result });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
 
         [HttpPost("scan-plate")]
         [Authorize(Roles = "Admin,Staff")]
