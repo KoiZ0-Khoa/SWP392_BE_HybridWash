@@ -11,6 +11,7 @@ public class LoyaltySummaryDTO
     public int BookingWindowDays { get; set; }
     public decimal PointMultiplier { get; set; }
     public string? NextTier { get; set; }
+    public string QualificationMode { get; set; } = null!;
     public decimal SpendRequiredForNextTier { get; set; }
     public int VisitsRequiredForNextTier { get; set; }
 }

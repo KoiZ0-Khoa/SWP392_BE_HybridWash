@@ -59,8 +59,10 @@ namespace HybridWash_BE_API
 
             builder.Services.AddScoped<IBookingRepository, BookingRepository>();
             builder.Services.AddScoped<IBookingService, BookingService>();
+            builder.Services.AddScoped<IBookingImageService, BookingImageService>();
             builder.Services.AddScoped<IIncidentReportRepository, IncidentReportRepository>();
             builder.Services.AddScoped<IIncidentReportService, IncidentReportService>();
+            builder.Services.AddScoped<IIncidentReportImageService, IncidentReportImageService>();
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<ISystemParameterRepository, SystemParameterRepository>();
             builder.Services.AddScoped<ISystemParameterService, SystemParameterService>();

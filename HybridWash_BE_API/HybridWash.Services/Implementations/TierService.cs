@@ -20,6 +20,26 @@ public class TierService : ITierService
         return (await _tierRepository.GetRulesAsync()).Select(Map).ToList();
     }
 
+    public async Task<IReadOnlyList<PublicTierRuleDTO>> GetPublicRulesAsync()
+    {
+        return (await _tierRepository.GetRulesAsync())
+            .Where(rule => rule.IsActive)
+            .OrderBy(rule => rule.Rank)
+            .Select(rule => new PublicTierRuleDTO
+            {
+                TierName = rule.TierName,
+                Rank = rule.Rank,
+                MinimumSpend = rule.MinimumSpend,
+                MinimumVisits = rule.MinimumVisits,
+                QualificationMode = rule.QualificationMode,
+                EvaluationPeriodMonths = rule.EvaluationPeriodMonths,
+                BookingWindowDays = rule.BookingWindowDays,
+                PointMultiplier = rule.PointMultiplier,
+                BenefitDescription = rule.BenefitDescription
+            })
+            .ToList();
+    }
+
     public async Task<TierRuleDTO?> UpdateRuleAsync(
         string tierName,
         UpdateTierRuleDTO request)
