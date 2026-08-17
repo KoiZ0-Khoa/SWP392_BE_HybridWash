@@ -27,6 +27,7 @@ namespace HybridWash.Services.DTOs.Booking
         public decimal? DepositAmount { get; set; }
         public decimal AmountToPay => (FinalPrice ?? OriginalPrice ?? 0) - (DepositAmount ?? 0);
         public int? PromotionId { get; set; }
+        public string? PromoCode { get; set; }
         public int? RedemptionId { get; set; }
         public AppliedRewardDto? AppliedReward { get; set; }
         public IReadOnlyList<BookingAddOnDto> AddOns { get; set; } = [];

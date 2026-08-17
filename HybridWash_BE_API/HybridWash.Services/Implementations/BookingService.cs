@@ -190,7 +190,54 @@ namespace HybridWash.Services.Implementations
                     dto.RedemptionId.Value, dto.ServiceId, originalPrice, customer);
             }
 
-            return new BenefitApplication(null, null, originalPrice, null);
+            return await ResolveBestAutomaticPromotionAsync(
+                dto.ServiceId,
+                originalPrice,
+                customer);
+        }
+
+        private async Task<BenefitApplication> ResolveBestAutomaticPromotionAsync(
+            int selectedServiceId,
+            decimal originalPrice,
+            Customer? customer)
+        {
+            var activePromotions = await _promotionRepo.GetActiveAsync(DateTime.UtcNow);
+            BenefitApplication? bestApplication = null;
+            var lowestFinalPrice = originalPrice;
+            decimal bestFreeAddOnValue = 0m;
+
+            foreach (var promotion in activePromotions)
+            {
+                try
+                {
+                    var application = await ResolvePromotionAsync(
+                        promotion.PromotionId,
+                        selectedServiceId,
+                        originalPrice,
+                        customer);
+                    var freeAddOnValue = application.AddOnService?.Price ?? 0m;
+
+                    if (application.FinalPrice < lowestFinalPrice
+                        || (application.FinalPrice == lowestFinalPrice
+                            && freeAddOnValue > bestFreeAddOnValue))
+                    {
+                        bestApplication = application;
+                        lowestFinalPrice = application.FinalPrice;
+                        bestFreeAddOnValue = freeAddOnValue;
+                    }
+                }
+                catch (ArgumentException)
+                {
+                    // A malformed promotion must not prevent a customer from booking.
+                }
+                catch (InvalidOperationException)
+                {
+                    // Ignore promotions that are not eligible for this tier/service.
+                }
+            }
+
+            return bestApplication
+                ?? new BenefitApplication(null, null, originalPrice, null);
         }
 
         private async Task<BenefitApplication> ResolvePromotionAsync(
@@ -472,6 +519,7 @@ namespace HybridWash.Services.Implementations
             FinalPrice = b.FinalPrice,
             DepositAmount = b.DepositAmount,
             PromotionId = b.PromotionId,
+            PromoCode = b.Promotion?.PromoCode,
             RedemptionId = b.RewardRedemptions.FirstOrDefault()?.RedemptionId,
             AppliedReward = MapAppliedReward(b.RewardRedemptions),
             AddOns = MapAddOns(b.BookingAddOns, b.RewardRedemptions),
