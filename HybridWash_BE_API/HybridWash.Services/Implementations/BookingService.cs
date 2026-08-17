@@ -452,50 +452,6 @@ namespace HybridWash.Services.Implementations
             return MapToBookingDto(booking);
         }
 
-        // ========== ADMIN LIST ==========
-        public async Task<PagedResultDto<BookingDto>> GetAdminBookingsAsync(AdminBookingQueryDto q)
-        {
-            var query = _bookingRepo.GetBookingsQueryable();
-
-            if (q.Date.HasValue)
-                query = query.Where(b => b.BookingDate == q.Date.Value);
-            if (!string.IsNullOrEmpty(q.Status))
-                query = query.Where(b => b.Status == q.Status);
-            if (!string.IsNullOrEmpty(q.Tier))
-                query = query.Where(b => b.Customer != null && b.Customer.CurrentTier == q.Tier);
-            if (!string.IsNullOrEmpty(q.VehicleType))
-                query = query.Where(b =>
-                    (b.Vehicle != null && b.Vehicle.VehicleType == q.VehicleType)
-                    || b.GuestVehicleType == q.VehicleType);
-
-            var desc = q.SortOrder?.ToLower() == "desc";
-            query = q.SortBy?.ToLower() switch
-            {
-                "status" => desc ? query.OrderByDescending(b => b.Status)
-                                 : query.OrderBy(b => b.Status),
-                "tier" => desc ? query.OrderByDescending(b => b.Customer!.CurrentTier)
-                               : query.OrderBy(b => b.Customer!.CurrentTier),
-                _ => desc ? query.OrderByDescending(b => b.BookingDate)
-                          : query.OrderBy(b => b.BookingDate)
-            };
-
-            var totalCount = await query.CountAsync();
-            var page = q.PageNumber < 1 ? 1 : q.PageNumber;
-            var size = q.PageSize < 1 ? 10 : q.PageSize;
-
-            var items = await query
-                .Skip((page - 1) * size)
-                .Take(size)
-                .ToListAsync();
-
-            return new PagedResultDto<BookingDto>
-            {
-                TotalCount = totalCount,
-                PageNumber = page,
-                PageSize = size,
-                Items = items.Select(MapToBookingDto).ToList()
-            };
-        }
 
         // ========== MAPPING ==========
         private static BookingDto MapToBookingDto(Booking b) => new()

@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using HybridWash.Repositories.Data;
+using HybridWash.Services.DTOs.Payment;
 using HybridWash.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -31,7 +32,7 @@ public class PaymentService : IPaymentService
         _payOS = new PayOSClient(clientId, apiKey, checksumKey);
     }
 
-    public async Task<string> CreateDepositPaymentLinkAsync(int bookingId, string returnUrl, string cancelUrl)
+    public async Task<PaymentResponseDTO> CreateDepositPaymentLinkAsync(int bookingId, string? returnUrl = null, string? cancelUrl = null)
     {
         var booking = await _context.Bookings
             .Include(b => b.Vehicle)
@@ -65,11 +66,11 @@ public class PaymentService : IPaymentService
 
         decimal depositAmount = 0;
 
-        string vehicleType = booking.Vehicle?.VehicleType ?? "Bike";
+        string vehicleType = booking.Vehicle?.VehicleType ?? booking.GuestVehicleType ?? "Bike";
 
         if (vehicleType.Equals("Car", StringComparison.OrdinalIgnoreCase))
         {
-            depositAmount = (booking.OriginalPrice ?? 0) * (systemParam.CarDepositPercentage / 100);
+            depositAmount = (booking.FinalPrice ?? booking.OriginalPrice ?? 0) * (systemParam.CarDepositPercentage / 100);
         }
         else
         {
@@ -87,16 +88,33 @@ public class PaymentService : IPaymentService
             OrderCode = orderCode,
             Amount = (int)depositAmount,
             Description = $"Deposit for booking {bookingId}",
-            CancelUrl = cancelUrl,
-            ReturnUrl = returnUrl
+            CancelUrl = string.IsNullOrWhiteSpace(cancelUrl) ? "https://hybridwash.vn/payment-cancel" : cancelUrl,
+            ReturnUrl = string.IsNullOrWhiteSpace(returnUrl) ? "https://hybridwash.vn/payment-success" : returnUrl
         };
 
         var paymentLink = await _payOS.PaymentRequests.CreateAsync(paymentRequest);
 
-        return paymentLink.CheckoutUrl;
+        string qrImageUrl = !string.IsNullOrEmpty(paymentLink.Bin) && !string.IsNullOrEmpty(paymentLink.AccountNumber)
+            ? $"https://img.vietqr.io/image/{paymentLink.Bin}-{paymentLink.AccountNumber}-compact2.png?amount={paymentLink.Amount}&addInfo={Uri.EscapeDataString(paymentLink.Description ?? "")}&accountName={Uri.EscapeDataString(paymentLink.AccountName ?? "")}"
+            : "";
+
+        return new PaymentResponseDTO
+        {
+            OrderCode = paymentLink.OrderCode,
+            Amount = paymentLink.Amount,
+            Description = paymentLink.Description ?? paymentRequest.Description,
+            AccountNumber = paymentLink.AccountNumber ?? "",
+            AccountName = paymentLink.AccountName ?? "",
+            Bin = paymentLink.Bin ?? "",
+            QrCode = paymentLink.QrCode ?? "",
+            CheckoutUrl = paymentLink.CheckoutUrl ?? "",
+            PaymentLinkId = paymentLink.PaymentLinkId,
+            Status = paymentLink.Status.ToString(),
+            QrImageUrl = qrImageUrl
+        };
     }
 
-    public async Task<string> CreateFinalPaymentLinkAsync(int bookingId, string returnUrl, string cancelUrl)
+    public async Task<PaymentResponseDTO> CreateFinalPaymentLinkAsync(int bookingId, string? returnUrl = null, string? cancelUrl = null)
     {
         var booking = await _context.Bookings
             .FirstOrDefaultAsync(b => b.BookingId == bookingId);
@@ -132,13 +150,30 @@ public class PaymentService : IPaymentService
             OrderCode = orderCode,
             Amount = (int)amountToPay,
             Description = $"Final for booking {bookingId}",
-            CancelUrl = cancelUrl,
-            ReturnUrl = returnUrl
+            CancelUrl = string.IsNullOrWhiteSpace(cancelUrl) ? "https://hybridwash.vn/payment-cancel" : cancelUrl,
+            ReturnUrl = string.IsNullOrWhiteSpace(returnUrl) ? "https://hybridwash.vn/payment-success" : returnUrl
         };
 
         var paymentLink = await _payOS.PaymentRequests.CreateAsync(paymentRequest);
 
-        return paymentLink.CheckoutUrl;
+        string qrImageUrl = !string.IsNullOrEmpty(paymentLink.Bin) && !string.IsNullOrEmpty(paymentLink.AccountNumber)
+            ? $"https://img.vietqr.io/image/{paymentLink.Bin}-{paymentLink.AccountNumber}-compact2.png?amount={paymentLink.Amount}&addInfo={Uri.EscapeDataString(paymentLink.Description ?? "")}&accountName={Uri.EscapeDataString(paymentLink.AccountName ?? "")}"
+            : "";
+
+        return new PaymentResponseDTO
+        {
+            OrderCode = paymentLink.OrderCode,
+            Amount = paymentLink.Amount,
+            Description = paymentLink.Description ?? paymentRequest.Description,
+            AccountNumber = paymentLink.AccountNumber ?? "",
+            AccountName = paymentLink.AccountName ?? "",
+            Bin = paymentLink.Bin ?? "",
+            QrCode = paymentLink.QrCode ?? "",
+            CheckoutUrl = paymentLink.CheckoutUrl ?? "",
+            PaymentLinkId = paymentLink.PaymentLinkId,
+            Status = paymentLink.Status.ToString(),
+            QrImageUrl = qrImageUrl
+        };
     }
 
     public async Task<bool> HandlePayOSWebhookAsync(Webhook webhook)

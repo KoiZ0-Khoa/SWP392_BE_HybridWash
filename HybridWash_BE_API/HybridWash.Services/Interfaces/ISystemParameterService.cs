@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using HybridWash.Entities.DTOs;
+using HybridWash.Services.DTOs;
 
 namespace HybridWash.Services.Interfaces;
 
