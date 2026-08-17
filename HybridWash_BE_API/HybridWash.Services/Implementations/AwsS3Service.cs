@@ -12,6 +12,15 @@ namespace HybridWash.Services.Implementations
 {
     public class AwsS3Service : IAwsS3Service
     {
+        private const long MaxUploadSize = 5 * 1024 * 1024;
+        private static readonly IReadOnlyDictionary<string, string> AllowedImageTypes =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["image/jpeg"] = ".jpg",
+                ["image/png"] = ".png",
+                ["image/webp"] = ".webp"
+            };
+
         private readonly IAmazonS3 _s3Client;
 
         public AwsS3Service(IAmazonS3 s3Client)
@@ -23,8 +32,11 @@ namespace HybridWash.Services.Implementations
         {
             if (file == null || file.Length == 0)
                 throw new ArgumentException("File is empty.");
+            if (file.Length > MaxUploadSize)
+                throw new ArgumentException("Image must be 5 MB or smaller.");
+            if (!AllowedImageTypes.TryGetValue(file.ContentType, out var fileExtension))
+                throw new ArgumentException("Only JPEG, PNG, and WebP images are allowed.");
 
-            var fileExtension = Path.GetExtension(file.FileName);
             var key = $"{prefix}/{Guid.NewGuid()}{fileExtension}";
 
             using var stream = file.OpenReadStream();

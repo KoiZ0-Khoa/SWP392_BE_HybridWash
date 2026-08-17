@@ -1,9 +1,13 @@
 using Amazon.Runtime;
 using Amazon.S3;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Net;
 using System.Text;
+using System.Threading.RateLimiting;
 // TODO: UNCOMMENT cÃ¡c using sau khi cháº¡y lá»‡nh EF migration xong
 using HybridWash.Repositories.Data;
 using HybridWash.Repositories.Implementations;
@@ -22,6 +26,18 @@ namespace HybridWash_BE_API
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            var connectionString = builder.Configuration.GetConnectionString("MyCnn");
+            if (string.IsNullOrWhiteSpace(connectionString))
+                throw new InvalidOperationException("ConnectionStrings:MyCnn is not configured.");
+
+            var jwtKey = builder.Configuration["Jwt:Key"];
+            var jwtIssuer = builder.Configuration["Jwt:Issuer"];
+            var jwtAudience = builder.Configuration["Jwt:Audience"];
+            if (string.IsNullOrWhiteSpace(jwtKey) || Encoding.UTF8.GetByteCount(jwtKey) < 32)
+                throw new InvalidOperationException("Jwt:Key must be configured with at least 32 bytes.");
+            if (string.IsNullOrWhiteSpace(jwtIssuer) || string.IsNullOrWhiteSpace(jwtAudience))
+                throw new InvalidOperationException("Jwt:Issuer and Jwt:Audience must be configured.");
+
             // Add services to the container.
 
             // ======================================================================
@@ -32,7 +48,7 @@ namespace HybridWash_BE_API
             // Configure DbContext
             builder.Services.AddDbContext<AutowashContext>(options =>
                 options.UseSqlServer(
-                    builder.Configuration.GetConnectionString("MyCnn"),
+                    connectionString,
                     sqlServerOptionsAction: sqlOptions =>
                     {
                         sqlOptions.EnableRetryOnFailure(
@@ -104,6 +120,14 @@ namespace HybridWash_BE_API
             builder.Services.AddLoyaltyModule();
 
             builder.Services.AddControllers();
+            builder.Services.AddProblemDetails();
+            builder.Services.AddRateLimiter(options =>
+            {
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+                options.AddPolicy("auth", context => CreatePerIpRateLimit(context, 10));
+                options.AddPolicy("public-write", context => CreatePerIpRateLimit(context, 5));
+                options.AddPolicy("payment", context => CreatePerIpRateLimit(context, 10));
+            });
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
@@ -136,7 +160,6 @@ namespace HybridWash_BE_API
             });
 
             // Configure JWT Authentication
-            var jwtKey = builder.Configuration["Jwt:Key"] ?? "SuperSecretKeyForHybridWashWhichIsAtLeast32BytesLong!";
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
@@ -146,13 +169,21 @@ namespace HybridWash_BE_API
                         ValidateAudience = true,
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
-                        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                        ValidAudience = builder.Configuration["Jwt:Audience"],
+                        ValidIssuer = jwtIssuer,
+                        ValidAudience = jwtAudience,
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
                     };
                 });
 
             var app = builder.Build();
+
+            var forwardedHeadersOptions = new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+            };
+            forwardedHeadersOptions.KnownProxies.Add(IPAddress.Loopback);
+            forwardedHeadersOptions.KnownProxies.Add(IPAddress.IPv6Loopback);
+            app.UseForwardedHeaders(forwardedHeadersOptions);
 
             // Apply pending EF Core migrations without recreating the existing database.
             using (var scope = app.Services.CreateScope())
@@ -167,15 +198,32 @@ namespace HybridWash_BE_API
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-            // Disable HTTPS redirection for local mobile development
-            // app.UseHttpsRedirection();
+            else
+            {
+                app.UseExceptionHandler();
+                app.UseHsts();
+                app.UseHttpsRedirection();
+            }
+            app.UseRateLimiter();
             app.UseAuthentication();
             app.UseAuthorization();
 
 
             app.MapControllers();
-
             app.Run();
         }
+
+        private static RateLimitPartition<string> CreatePerIpRateLimit(
+            HttpContext context,
+            int permitLimit) =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    AutoReplenishment = true,
+                    PermitLimit = permitLimit,
+                    QueueLimit = 0,
+                    Window = TimeSpan.FromMinutes(1)
+                });
     }
 }
