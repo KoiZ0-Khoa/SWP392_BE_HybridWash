@@ -2,12 +2,10 @@ using Amazon.Runtime;
 using Amazon.S3;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Net;
 using System.Text;
-using System.Threading.RateLimiting;
 // TODO: UNCOMMENT cÃ¡c using sau khi cháº¡y lá»‡nh EF migration xong
 using HybridWash.Repositories.Data;
 using HybridWash.Repositories.Implementations;
@@ -121,13 +119,6 @@ namespace HybridWash_BE_API
 
             builder.Services.AddControllers();
             builder.Services.AddProblemDetails();
-            builder.Services.AddRateLimiter(options =>
-            {
-                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-                options.AddPolicy("auth", context => CreatePerIpRateLimit(context, 10));
-                options.AddPolicy("public-write", context => CreatePerIpRateLimit(context, 5));
-                options.AddPolicy("payment", context => CreatePerIpRateLimit(context, 10));
-            });
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
@@ -204,7 +195,6 @@ namespace HybridWash_BE_API
                 app.UseHsts();
                 app.UseHttpsRedirection();
             }
-            app.UseRateLimiter();
             app.UseAuthentication();
             app.UseAuthorization();
 
@@ -213,17 +203,5 @@ namespace HybridWash_BE_API
             app.Run();
         }
 
-        private static RateLimitPartition<string> CreatePerIpRateLimit(
-            HttpContext context,
-            int permitLimit) =>
-            RateLimitPartition.GetFixedWindowLimiter(
-                partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                factory: _ => new FixedWindowRateLimiterOptions
-                {
-                    AutoReplenishment = true,
-                    PermitLimit = permitLimit,
-                    QueueLimit = 0,
-                    Window = TimeSpan.FromMinutes(1)
-                });
     }
 }
