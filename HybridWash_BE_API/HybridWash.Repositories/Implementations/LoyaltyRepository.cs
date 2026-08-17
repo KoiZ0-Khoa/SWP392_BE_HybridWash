@@ -124,4 +124,98 @@ public class LoyaltyRepository : ILoyaltyRepository
             return (earnedPoints, customer.CustomerId);
         });
     }
+
+    public async Task<(int ProcessedCustomers, int ProcessedEarnTransactions, int ExpiredPoints)>
+        ExpirePointsAsync(DateTime processedAt)
+    {
+        var strategy = _context.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await _context.Database
+                .BeginTransactionAsync(IsolationLevel.Serializable);
+
+            var customers = await _context.Customers
+                .Include(customer => customer.PointLedgers)
+                .Where(customer => customer.PointLedgers.Any(item =>
+                    item.TransactionType == "Earn"
+                    && item.Points > 0
+                    && item.ExpireDate.HasValue
+                    && item.ExpireDate <= processedAt
+                    && !_context.PointLedgers.Any(expiration =>
+                        expiration.TransactionType == "Expire"
+                        && expiration.SourceTransactionId == item.TransactionId)))
+                .ToListAsync();
+
+            var processedCustomers = 0;
+            var processedEarnTransactions = 0;
+            var expiredPoints = 0;
+
+            foreach (var customer in customers)
+            {
+                var ledgers = customer.PointLedgers
+                    .OrderBy(item => item.CreatedAt)
+                    .ThenBy(item => item.TransactionId)
+                    .ToList();
+                var earns = ledgers
+                    .Where(item => item.TransactionType == "Earn" && item.Points > 0)
+                    .ToList();
+
+                // Redemptions and previous expirations consume the oldest earned
+                // points first, so only the unused part of an Earn can expire.
+                var deductionsToAllocate = ledgers
+                    .Where(item => item.Points < 0)
+                    .Sum(item => -(long)item.Points);
+                var remainingPoints = new Dictionary<int, int>();
+                foreach (var earn in earns)
+                {
+                    var consumed = (int)Math.Min(earn.Points, deductionsToAllocate);
+                    remainingPoints[earn.TransactionId] = earn.Points - consumed;
+                    deductionsToAllocate -= consumed;
+                }
+
+                var processedForCustomer = false;
+                var availableBalance = Math.Max(customer.CurrentPoints ?? 0, 0);
+                foreach (var earn in earns.Where(item =>
+                    item.ExpireDate <= processedAt
+                    && !ledgers.Any(expiration =>
+                        expiration.TransactionType == "Expire"
+                        && expiration.SourceTransactionId == item.TransactionId)))
+                {
+                    var unusedPoints = remainingPoints[earn.TransactionId];
+                    var pointsToExpire = Math.Min(unusedPoints, availableBalance);
+
+                    var expiration = new PointLedger
+                    {
+                        CustomerId = customer.CustomerId,
+                        BookingId = earn.BookingId,
+                        SourceTransactionId = earn.TransactionId,
+                        Points = -pointsToExpire,
+                        TransactionType = "Expire",
+                        Description = pointsToExpire > 0
+                            ? $"Expired unused points from earn transaction #{earn.TransactionId}"
+                            : $"Expiration processed for earn transaction #{earn.TransactionId}; no unused points remained",
+                        CreatedAt = processedAt
+                    };
+
+                    _context.PointLedgers.Add(expiration);
+                    ledgers.Add(expiration);
+                    availableBalance -= pointsToExpire;
+                    expiredPoints += pointsToExpire;
+                    processedEarnTransactions++;
+                    processedForCustomer = true;
+                }
+
+                if (processedForCustomer)
+                {
+                    customer.CurrentPoints = availableBalance;
+                    processedCustomers++;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return (processedCustomers, processedEarnTransactions, expiredPoints);
+        });
+    }
 }

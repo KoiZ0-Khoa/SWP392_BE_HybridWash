@@ -72,8 +72,10 @@ public class LoyaltyService : ILoyaltyService
             {
                 TransactionId = transaction.TransactionId,
                 BookingId = transaction.BookingId,
+                SourceTransactionId = transaction.SourceTransactionId,
                 Points = transaction.Points,
                 TransactionType = transaction.TransactionType,
+                Description = transaction.Description,
                 ExpireDate = transaction.ExpireDate,
                 CreatedAt = transaction.CreatedAt
             }).ToList(),
@@ -99,5 +101,16 @@ public class LoyaltyService : ILoyaltyService
         }
 
         return result.EarnedPoints;
+    }
+
+    public async Task<PointExpiryResultDTO> ExpirePointsAsync(DateTime processedAt)
+    {
+        var result = await _loyaltyRepository.ExpirePointsAsync(processedAt);
+        return new PointExpiryResultDTO
+        {
+            ProcessedCustomers = result.ProcessedCustomers,
+            ProcessedEarnTransactions = result.ProcessedEarnTransactions,
+            ExpiredPoints = result.ExpiredPoints
+        };
     }
 }

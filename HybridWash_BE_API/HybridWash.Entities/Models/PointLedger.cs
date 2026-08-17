@@ -13,6 +13,8 @@ public partial class PointLedger
 
     public int? RewardRedemptionId { get; set; }
 
+    public int? SourceTransactionId { get; set; }
+
     public int Points { get; set; }
 
     public string? TransactionType { get; set; }

@@ -283,6 +283,14 @@ public partial class AutowashContext : DbContext
                 .IsUnique()
                 .HasFilter("([RewardRedemptionID] IS NOT NULL)");
 
+            entity.HasIndex(e => e.SourceTransactionId, "UX_PointLedger_ExpireSourceTransactionID")
+                .IsUnique()
+                .HasFilter("([SourceTransactionID] IS NOT NULL)");
+
+            entity.HasIndex(
+                e => new { e.TransactionType, e.ExpireDate },
+                "IX_PointLedger_TransactionType_ExpireDate");
+
             entity.Property(e => e.TransactionId).HasColumnName("TransactionID");
             entity.Property(e => e.BookingId).HasColumnName("BookingID");
             entity.Property(e => e.CreatedAt)
@@ -292,9 +300,16 @@ public partial class AutowashContext : DbContext
             entity.Property(e => e.Description).HasMaxLength(500);
             entity.Property(e => e.ExpireDate).HasColumnType("datetime");
             entity.Property(e => e.RewardRedemptionId).HasColumnName("RewardRedemptionID");
+            entity.Property(e => e.SourceTransactionId).HasColumnName("SourceTransactionID");
             entity.Property(e => e.TransactionType)
                 .HasMaxLength(20)
                 .IsUnicode(false);
+
+            entity.HasOne<PointLedger>()
+                .WithMany()
+                .HasForeignKey(e => e.SourceTransactionId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_PointLedger_ExpireSourceTransaction");
 
             entity.HasOne(d => d.Booking).WithMany(p => p.PointLedgers)
                 .HasForeignKey(d => d.BookingId)

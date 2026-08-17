@@ -98,6 +98,7 @@ namespace HybridWash_BE_API
             // Background Service for Washing Automation
 
             builder.Services.AddHostedService<HybridWash.Services.BackgroundServices.MonthlyTierReviewService>();
+            builder.Services.AddHostedService<PointExpiryBackgroundService>();
 
             builder.Services.AddSingleton<ITokenGenerator, JwtTokenGenerator>();
             builder.Services.AddLoyaltyModule();

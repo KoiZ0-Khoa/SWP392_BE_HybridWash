@@ -14,4 +14,6 @@ public interface ILoyaltyRepository
         int bookingId,
         decimal vndPerPoint,
         DateTime completedAt);
+    Task<(int ProcessedCustomers, int ProcessedEarnTransactions, int ExpiredPoints)>
+        ExpirePointsAsync(DateTime processedAt);
 }
