@@ -1,0 +1,109 @@
+name: Deploy BE to Lightsail
+
+on:
+  push:
+    branches:
+      - Deloy
+  workflow_dispatch:
+
+concurrency:
+  group: hybridwash-be-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: >-
+          dotnet restore
+          HybridWash_BE_API/HybridWash_BE_API/HybridWash_BE_API.csproj
+          --runtime linux-x64
+
+      - name: Publish for Lightsail
+        run: >-
+          dotnet publish
+          HybridWash_BE_API/HybridWash_BE_API/HybridWash_BE_API.csproj
+          --configuration Release
+          --runtime linux-x64
+          --self-contained false
+          --no-restore
+          --output publish
+
+      - name: Package release
+        run: tar -czf hybridwash-api.tar.gz -C publish .
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.LIGHTSAIL_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_KNOWN_HOSTS" | tr -d '\r' > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Upload release
+        env:
+          LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
+          LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
+        run: >-
+          scp hybridwash-api.tar.gz
+          "$LIGHTSAIL_USER@$LIGHTSAIL_HOST:/tmp/hybridwash-api-$GITHUB_SHA.tar.gz"
+
+      - name: Deploy and verify
+        env:
+          LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
+          LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
+        run: |
+          ssh "$LIGHTSAIL_USER@$LIGHTSAIL_HOST" "bash -s -- '$GITHUB_SHA'" <<'REMOTE'
+          set -euo pipefail
+
+          release_id="$1"
+          archive="/tmp/hybridwash-api-$release_id.tar.gz"
+          staging="/tmp/hybridwash-api-$release_id"
+          app_dir="/var/www/hybridwash-api"
+          backup_dir="/var/www/hybridwash-api-backup"
+
+          rm -rf "$staging"
+          mkdir -p "$staging"
+          tar -xzf "$archive" -C "$staging"
+          test -f "$staging/HybridWash_BE_API.dll"
+
+          sudo systemctl stop hybridwash-api
+          sudo rm -rf "$backup_dir"
+          sudo cp -a "$app_dir" "$backup_dir"
+          sudo find "$app_dir" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
+          sudo cp -a "$staging"/. "$app_dir"/
+          sudo chown -R www-data:www-data "$app_dir"
+          sudo chmod -R a+rX "$app_dir"
+          sudo systemctl start hybridwash-api
+
+          if ! curl --fail --silent --show-error --retry 6 --retry-delay 5 --retry-connrefused \
+            -H 'X-Forwarded-Proto: https' \
+            http://127.0.0.1:5000/api/Services > /dev/null; then
+            sudo systemctl stop hybridwash-api
+            sudo find "$app_dir" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
+            sudo cp -a "$backup_dir"/. "$app_dir"/
+            sudo chown -R www-data:www-data "$app_dir"
+            sudo chmod -R a+rX "$app_dir"
+            sudo systemctl start hybridwash-api
+            exit 1
+          fi
+
+          rm -rf "$staging" "$archive"
+          REMOTE
