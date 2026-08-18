@@ -99,7 +99,7 @@ CREATE TABLE Staff (
     PasswordHash NVARCHAR(MAX) NOT NULL,
     
     Role VARCHAR(50) DEFAULT 'Staff'
-        CHECK (Role IN ('Staff', 'Manager', 'Admin')),
+        CHECK (Role IN ('Staff', 'Admin')),
 
     IsActive BIT DEFAULT 1, -- 1: Đang làm việc, 0: Đã nghỉ
     CreatedAt DATETIME DEFAULT GETDATE()
