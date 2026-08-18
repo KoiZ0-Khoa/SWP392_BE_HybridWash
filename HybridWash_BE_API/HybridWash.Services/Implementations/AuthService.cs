@@ -4,7 +4,6 @@ using HybridWash.Services.DTOs;
 using HybridWash.Services.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
 using System;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace HybridWash.Services.Implementations
@@ -26,13 +25,13 @@ namespace HybridWash.Services.Implementations
 
         public async Task<AuthResponseDTO> LoginAsync(LoginRequestDTO request)
         {
-            // 1. Thử tìm trong bảng Staff trước (bao gồm Admin, Manager, Staff...)
+            // 1. Thử tìm trong bảng Staff trước (Admin hoặc Staff)
             var staff = await _authRepository.GetStaffByPhoneNumberAsync(request.PhoneNumber);
             if (staff != null)
             {
                 if (!BCrypt.Net.BCrypt.Verify(request.Password, staff.PasswordHash))
                 {
-                    throw new Exception("Số điện thoại hoặc mật khẩu không chính xác.");
+                    throw new Exception("Mật khẩu không chính xác.");
                 }
 
                 if (staff.IsActive != true)
@@ -54,7 +53,7 @@ namespace HybridWash.Services.Implementations
             {
                 if (!BCrypt.Net.BCrypt.Verify(request.Password, customer.PasswordHash))
                 {
-                    throw new Exception("Số điện thoại hoặc mật khẩu không chính xác.");
+                    throw new Exception("Mật khẩu không chính xác.");
                 }
 
                 return new AuthResponseDTO
@@ -125,14 +124,6 @@ namespace HybridWash.Services.Implementations
                 throw new Exception("Số điện thoại nhân viên đã tồn tại.");
             }
 
-            var allowedRoles = new[] { "Admin", "Manager", "Staff" };
-            var role = allowedRoles.FirstOrDefault(x =>
-                x.Equals(request.Role, StringComparison.OrdinalIgnoreCase));
-            if (role == null)
-            {
-                throw new ArgumentException("Role must be Admin, Manager, or Staff.");
-            }
-
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
             var staff = new Staff
@@ -140,7 +131,7 @@ namespace HybridWash.Services.Implementations
                 FullName = request.FullName,
                 PhoneNumber = request.PhoneNumber,
                 PasswordHash = passwordHash,
-                Role = role,
+                Role = string.IsNullOrEmpty(request.Role) ? "Staff" : request.Role,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
@@ -161,11 +152,11 @@ namespace HybridWash.Services.Implementations
 
             if (customer == null)
             {
-                return "Nếu email tồn tại, mã OTP đã được gửi.";
+                throw new Exception("Email không tồn tại trong hệ thống.");
             }
 
             // Generate 6-digit OTP
-            var otp = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+            var otp = new Random().Next(100000, 999999).ToString();
 
             // Save to memory cache with 5 minutes expiration
             _memoryCache.Set($"OTP_{request.Email}", otp, TimeSpan.FromMinutes(5));
@@ -229,17 +220,16 @@ namespace HybridWash.Services.Implementations
 
             foreach (var s in staffs)
             {
-                var role = s.Role ?? "Staff";
                 var dto = new UserDto
                 {
                     Id = s.StaffId,
                     FullName = s.FullName,
                     PhoneNumber = s.PhoneNumber,
-                    Role = role,
+                    Role = s.Role,
                     CreatedAt = s.CreatedAt
                 };
 
-                if (role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+                if (s.Role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
                 {
                     result.Admins.Add(dto);
                 }

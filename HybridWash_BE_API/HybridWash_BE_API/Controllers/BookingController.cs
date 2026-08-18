@@ -1,7 +1,9 @@
 using HybridWash.Services.DTOs.Booking;
 using HybridWash.Services.Interfaces;
+using HybridWash_BE_API.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace HybridWash_BE_API.Controllers
 {
@@ -10,10 +12,12 @@ namespace HybridWash_BE_API.Controllers
     public class BookingController : ControllerBase
     {
         private readonly IBookingService _bookingService;
+        private readonly IHubContext<NotificationHub> _hubContext;
 
-        public BookingController(IBookingService bookingService)
+        public BookingController(IBookingService bookingService, IHubContext<NotificationHub> hubContext)
         {
             _bookingService = bookingService;
+            _hubContext = hubContext;
         }
 
         [HttpPost]
@@ -171,6 +175,12 @@ namespace HybridWash_BE_API.Controllers
 
                 if (result.DetectedPlate == null)
                     return Ok(new { Success = true, Message = "Could not detect license plate", Data = result });
+
+                // Báo cho FE biết có xe vừa quét biển số
+                await _hubContext.Clients.All.SendAsync("ReceiveScanNotification", new {
+                    Message = "Camera vừa quét được một biển số!",
+                    Plate = result.DetectedPlate
+                });
 
                 return Ok(new { Success = true, Data = result });
             }

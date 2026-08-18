@@ -38,12 +38,12 @@ public class IncidentReportImageService : IIncidentReportImageService
         var report = await _incidentReportRepository.GetByIdAsync(reportId)
             ?? throw new KeyNotFoundException("Incident report not found.");
 
-        var isAdminOrManager = requesterRole.Equals("Admin", StringComparison.OrdinalIgnoreCase)
-            || requesterRole.Equals("Manager", StringComparison.OrdinalIgnoreCase);
+        var isStaffOrAdmin = requesterRole.Equals("Admin", StringComparison.OrdinalIgnoreCase)
+            || requesterRole.Equals("Staff", StringComparison.OrdinalIgnoreCase);
         var isOwner = requesterRole.Equals("Customer", StringComparison.OrdinalIgnoreCase)
             && report.CustomerId == requesterId;
 
-        if (!isAdminOrManager && !isOwner)
+        if (!isStaffOrAdmin && !isOwner)
         {
             throw new UnauthorizedAccessException(
                 "You do not have permission to view this incident report image.");

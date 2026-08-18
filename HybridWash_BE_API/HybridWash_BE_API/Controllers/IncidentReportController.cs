@@ -28,11 +28,11 @@ namespace HybridWash_BE_API.Controllers
                 var customerIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (string.IsNullOrEmpty(customerIdStr) || !int.TryParse(customerIdStr, out int customerId))
                 {
-                    return Unauthorized(new { Message = "Customer ID không h?p l?." });
+                    return Unauthorized(new { Message = "Customer ID khï¿½ng h?p l?." });
                 }
 
                 var result = await _service.CreateReportAsync(customerId, request);
-                return Ok(new { Success = true, Message = "G?i báo cáo thành công.", Data = result });
+                return Ok(new { Success = true, Message = "G?i bï¿½o cï¿½o thï¿½nh cï¿½ng.", Data = result });
             }
             catch (Exception ex)
             {
@@ -49,7 +49,7 @@ namespace HybridWash_BE_API.Controllers
                 var customerIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (string.IsNullOrEmpty(customerIdStr) || !int.TryParse(customerIdStr, out int customerId))
                 {
-                    return Unauthorized(new { Message = "Customer ID không h?p l?." });
+                    return Unauthorized(new { Message = "Customer ID khï¿½ng h?p l?." });
                 }
 
                 var result = await _service.GetMyReportsAsync(customerId);
@@ -61,7 +61,7 @@ namespace HybridWash_BE_API.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin,Manager")]
+        [Authorize(Roles = "Admin,Manager,Staff")]
         [HttpGet("admin/all")]
         public async Task<IActionResult> GetAllReports()
         {
@@ -76,14 +76,14 @@ namespace HybridWash_BE_API.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin,Manager")]
+        [Authorize(Roles = "Admin,Manager,Staff")]
         [HttpPut("admin/{id}/resolve")]
         public async Task<IActionResult> ResolveReport(int id, [FromBody] ResolveIncidentReportDto request)
         {
             try
             {
                 var result = await _service.ResolveReportAsync(id, request);
-                return Ok(new { Success = true, Message = "C?p nh?t tr?ng thái thành công.", Data = result });
+                return Ok(new { Success = true, Message = "C?p nh?t tr?ng thï¿½i thï¿½nh cï¿½ng.", Data = result });
             }
             catch (Exception ex)
             {
