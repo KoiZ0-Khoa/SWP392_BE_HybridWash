@@ -3,7 +3,7 @@ name: Deploy BE to Lightsail
 on:
   push:
     branches:
-      - Deloy
+      - main
   workflow_dispatch:
 
 concurrency:
