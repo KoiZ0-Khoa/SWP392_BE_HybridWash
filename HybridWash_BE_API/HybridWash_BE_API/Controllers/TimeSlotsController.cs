@@ -1,6 +1,7 @@
 using HybridWash.Services.DTOs.TimeSlot;
 using HybridWash.Services.Implementations;
 using HybridWash.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HybridWash_BE_API.Controllers
@@ -28,6 +29,7 @@ namespace HybridWash_BE_API.Controllers
                 return BadRequest(new { Message = ex.Message });
             }
         }
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> CreateTimeSlot([FromBody] CreateTimeSlotDto dto)
         {
@@ -63,6 +65,7 @@ namespace HybridWash_BE_API.Controllers
             return Ok(slot);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}/status")]
         public async Task<IActionResult> ToggleStatus(int id, [FromBody] UpdateSlotStatusDto dto)
         {

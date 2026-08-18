@@ -7,7 +7,7 @@ namespace HybridWash_BE_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] // Yêu cầu đăng nhập (sẽ kiểm tra role nếu cần, ở đây dùng JWT token chung)
+    [Authorize(Roles = "Customer")]
     public class CustomerController : ControllerBase
     {
         private readonly ICustomerService _customerService;

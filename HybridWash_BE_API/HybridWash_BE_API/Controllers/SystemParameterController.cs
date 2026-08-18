@@ -25,7 +25,7 @@ namespace HybridWash_BE_API.Controllers
         }
 
         [HttpPut]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateSystemParameter([FromBody] SystemParameterUpdateDto updateDto)
         {
             if (!ModelState.IsValid)
