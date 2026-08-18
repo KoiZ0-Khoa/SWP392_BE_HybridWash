@@ -61,7 +61,7 @@ namespace HybridWash_BE_API.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin,Manager,Staff")]
+        [Authorize(Roles = "Admin,Staff")]
         [HttpGet("admin/all")]
         public async Task<IActionResult> GetAllReports()
         {
@@ -76,7 +76,7 @@ namespace HybridWash_BE_API.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin,Manager,Staff")]
+        [Authorize(Roles = "Admin,Staff")]
         [HttpPut("admin/{id}/resolve")]
         public async Task<IActionResult> ResolveReport(int id, [FromBody] ResolveIncidentReportDto request)
         {

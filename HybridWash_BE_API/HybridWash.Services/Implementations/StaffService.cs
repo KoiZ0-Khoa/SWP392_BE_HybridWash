@@ -52,7 +52,7 @@ namespace HybridWash.Services.Implementations
             if (booking == null)
                 throw new Exception("Booking không tồn tại.");
 
-            if (booking.Status != "Pending")
+            if (booking.Status != "Pending" && booking.Status != "Deposited")
                 throw new Exception($"Không thể Confirm Booking đang ở trạng thái: {booking.Status}");
 
             booking.Status = "Confirmed";
@@ -72,7 +72,7 @@ namespace HybridWash.Services.Implementations
 
             var licensePlate = booking.Vehicle?.LicensePlate ?? booking.GuestLicensePlate ?? "Không xác định";
 
-            if (booking.Status != "Pending" && booking.Status != "Confirmed")
+            if (booking.Status != "Pending" && booking.Status != "Confirmed" && booking.Status != "Deposited")
             {
                 throw new Exception($"Booking của xe {licensePlate} đang ở trạng thái {booking.Status}, không thể Check-in.");
             }
@@ -165,7 +165,7 @@ namespace HybridWash.Services.Implementations
 
             var licensePlate = booking.Vehicle?.LicensePlate ?? booking.GuestLicensePlate ?? "Không xác định";
 
-            if (booking.Status == "Pending" || booking.Status == "Confirmed")
+            if (booking.Status == "Pending" || booking.Status == "Confirmed" || booking.Status == "Deposited")
             {
                 throw new Exception($"Lỗi: Xe mang biển số {licensePlate} chưa check-in! Bạn không thể check-out xe chưa check-in.");
             }
