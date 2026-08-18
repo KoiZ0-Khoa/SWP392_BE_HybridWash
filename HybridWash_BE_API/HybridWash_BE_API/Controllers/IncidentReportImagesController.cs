@@ -7,7 +7,7 @@ namespace HybridWash_BE_API.Controllers;
 
 [Route("api/IncidentReport/{reportId:int}/images")]
 [ApiController]
-[Authorize(Roles = "Customer,Admin,Manager")]
+[Authorize(Roles = "Customer,Admin,Staff")]
 public class IncidentReportImagesController : ControllerBase
 {
     private readonly IIncidentReportImageService _incidentReportImageService;

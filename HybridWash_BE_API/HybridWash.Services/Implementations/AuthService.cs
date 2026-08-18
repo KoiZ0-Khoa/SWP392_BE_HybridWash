@@ -25,7 +25,7 @@ namespace HybridWash.Services.Implementations
 
         public async Task<AuthResponseDTO> LoginAsync(LoginRequestDTO request)
         {
-            // 1. Thử tìm trong bảng Staff trước (bao gồm Admin, Manager, Washer...)
+            // 1. Thử tìm trong bảng Staff trước (Admin hoặc Staff)
             var staff = await _authRepository.GetStaffByPhoneNumberAsync(request.PhoneNumber);
             if (staff != null)
             {
@@ -41,9 +41,9 @@ namespace HybridWash.Services.Implementations
 
                 return new AuthResponseDTO
                 {
-                    Token = _tokenGenerator.Generate(staff.StaffId.ToString(), staff.Role ?? "Washer", staff.FullName),
+                    Token = _tokenGenerator.Generate(staff.StaffId.ToString(), staff.Role ?? "Staff", staff.FullName),
                     FullName = staff.FullName,
-                    Role = staff.Role ?? "Washer"
+                    Role = staff.Role ?? "Staff"
                 };
             }
 

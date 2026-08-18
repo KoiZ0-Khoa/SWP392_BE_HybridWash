@@ -7,7 +7,7 @@ namespace HybridWash_BE_API.Controllers;
 
 [Route("api/Booking/{bookingId:int}/incident-images")]
 [ApiController]
-[Authorize]
+[Authorize(Roles = "Customer,Admin,Staff")]
 public class BookingImagesController : ControllerBase
 {
     private readonly IBookingImageService _bookingImageService;
