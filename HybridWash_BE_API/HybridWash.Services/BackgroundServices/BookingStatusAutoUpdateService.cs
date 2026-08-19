@@ -87,7 +87,13 @@ namespace HybridWash.Services.BackgroundServices
             {
                 foreach (var booking in expiredPendingBookings)
                 {
-                    context.RewardRedemptions.RemoveRange(booking.RewardRedemptions);
+                    foreach (var redemption in booking.RewardRedemptions)
+                    {
+                        redemption.BookingId = null;
+                        redemption.Status = "Issued";
+                        redemption.UsedAt = null;
+                    }
+
                     context.BookingAddOns.RemoveRange(booking.BookingAddOns);
                 }
 
