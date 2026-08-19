@@ -79,7 +79,7 @@ namespace HybridWash.Services.Implementations
         public async Task<IncidentReportDto> ResolveReportAsync(int reportId, ResolveIncidentReportDto request)
         {
             var report = await _repo.GetByIdAsync(reportId);
-            if (report == null) throw new Exception("Kh�ng t�m th?y b�o c�o.");
+            if (report == null) throw new Exception("Khôn tìm thấy báo cáo");
 
             report.Status = request.Status;
             report.ManagerNote = request.ManagerNote;

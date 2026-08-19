@@ -93,6 +93,7 @@ namespace HybridWash_BE_API
 
             // Register Background Service for auto-cleanup
             builder.Services.AddHostedService<BookingCleanupBackgroundService>();
+            builder.Services.AddHostedService<BookingStatusAutoUpdateService>();
 
             builder.Services.AddMemoryCache();
 
