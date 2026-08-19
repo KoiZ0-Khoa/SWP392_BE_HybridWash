@@ -28,7 +28,7 @@ namespace HybridWash.Services.Implementations
             var belongs = await _repo.BookingBelongsToCustomerAsync(request.BookingId, customerId);
             if (!belongs)
             {
-                throw new Exception("Ðon hàng này không thu?c v? b?n, không th? báo cáo s? c?.");
+                throw new Exception("ï¿½on hï¿½ng nï¿½y khï¿½ng thu?c v? b?n, khï¿½ng th? bï¿½o cï¿½o s? c?.");
             }
 
             string? url1 = null;
@@ -79,7 +79,7 @@ namespace HybridWash.Services.Implementations
         public async Task<IncidentReportDto> ResolveReportAsync(int reportId, ResolveIncidentReportDto request)
         {
             var report = await _repo.GetByIdAsync(reportId);
-            if (report == null) throw new Exception("Không tìm th?y báo cáo.");
+            if (report == null) throw new Exception("Khï¿½ng tï¿½m th?y bï¿½o cï¿½o.");
 
             report.Status = request.Status;
             report.ManagerNote = request.ManagerNote;
@@ -87,6 +87,11 @@ namespace HybridWash.Services.Implementations
             if (request.Status == "Resolved" || request.Status == "Rejected")
             {
                 report.ResolvedAt = DateTime.UtcNow;
+            }
+
+            if (request.Status == "Resolved" && report.Booking != null && report.Booking.Status == "Washing")
+            {
+                report.Booking.Status = "Processed";
             }
 
             await _repo.UpdateAsync(report);
