@@ -36,23 +36,19 @@ namespace HybridWash.Services.BackgroundServices
                 }
 
                 // Quét mỗi 5 phút
-                await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
             }
         }
 
-        /// <summary>
-        /// Booking đã Deposited nhưng khách không tới: khi EndTime của slot <= giờ hiện tại → NoShow
-        /// </summary>
         private async Task MarkNoShowBookingsAsync(CancellationToken stoppingToken)
         {
             using var scope = _serviceProvider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<AutowashContext>();
 
-            var now = DateTime.UtcNow.AddHours(7); // VN time
+            var now = DateTime.UtcNow.AddHours(7);
             var today = DateOnly.FromDateTime(now);
             var currentTime = TimeOnly.FromDateTime(now);
 
-            // Tìm booking Deposited/Confirmed mà slot đã hết giờ (EndTime <= giờ hiện tại)
             var noShowBookings = await context.Bookings
                 .Include(b => b.Slot)
                 .Where(b => (b.Status == "Deposited" || b.Status == "Confirmed")
@@ -72,17 +68,16 @@ namespace HybridWash.Services.BackgroundServices
             }
         }
 
-        /// <summary>
-        /// Booking Pending quá 10 phút chưa thanh toán (Deposit) → tự động xóa
-        /// </summary>
         private async Task CleanupExpiredPendingBookingsAsync(CancellationToken stoppingToken)
         {
             using var scope = _serviceProvider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<AutowashContext>();
 
-            var tenMinutesAgo = DateTime.UtcNow.AddMinutes(-10);
+            var tenMinutesAgo = DateTime.UtcNow.AddMinutes(-1);
 
             var expiredPendingBookings = await context.Bookings
+                .Include(b => b.RewardRedemptions)
+                .Include(b => b.BookingAddOns)
                 .Where(b => b.Status == "Pending"
                          && b.CreatedAt != null
                          && b.CreatedAt <= tenMinutesAgo)
@@ -90,6 +85,12 @@ namespace HybridWash.Services.BackgroundServices
 
             if (expiredPendingBookings.Any())
             {
+                foreach (var booking in expiredPendingBookings)
+                {
+                    context.RewardRedemptions.RemoveRange(booking.RewardRedemptions);
+                    context.BookingAddOns.RemoveRange(booking.BookingAddOns);
+                }
+
                 context.Bookings.RemoveRange(expiredPendingBookings);
                 await context.SaveChangesAsync(stoppingToken);
                 _logger.LogInformation("Deleted {Count} expired Pending booking(s).", expiredPendingBookings.Count);
