@@ -14,6 +14,7 @@ namespace HybridWash.Repositories.Interfaces
         Task<TimeSlot?> GetTimeSlotByIdAsync(int slotId);
         Task AddTimeSlotAsync(TimeSlot timeSlot);
         Task UpdateTimeSlotAsync(TimeSlot timeSlot);
+        Task<bool> ExistsTimeSlotAsync(TimeOnly startTime, TimeOnly endTime, int? excludeSlotId = null);
 
         // Trả về Tuple (số Car, số Bike) đã được book
         Task<(int CarCount, int BikeCount)> CountBookingsInSlotAsync(int slotId, DateOnly bookingDate);

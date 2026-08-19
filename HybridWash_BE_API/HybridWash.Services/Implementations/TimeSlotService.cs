@@ -28,6 +28,10 @@ namespace HybridWash.Services.Implementations
             if (dto.CarCapacity < 0 || dto.BikeCapacity < 0)
                 throw new Exception("Capacity cannot be negative");
 
+            var exists = await _timeSlotRepository.ExistsTimeSlotAsync(dto.StartTime, dto.EndTime);
+            if (exists)
+                throw new Exception("A time slot with this start time and end time already exists.");
+
             var timeSlot = new TimeSlot
             {
                 StartTime = dto.StartTime,
@@ -110,12 +114,46 @@ namespace HybridWash.Services.Implementations
             };
         }
 
-        public async Task<TimeSlotDto> ToggleSlotStatusAsync(int slotId, bool isActive)
+        public async Task<TimeSlotDto> UpdateTimeSlotAsync(int slotId, UpdateTimeSlotDto dto)
         {
             var slot = await _timeSlotRepository.GetTimeSlotByIdAsync(slotId);
             if (slot == null) throw new Exception("Slot not found");
 
-            slot.IsActive = isActive;
+            var newStartTime = dto.StartTime ?? slot.StartTime;
+            var newEndTime = dto.EndTime ?? slot.EndTime;
+
+            if (newStartTime >= newEndTime)
+                throw new Exception("StartTime must be before EndTime");
+
+            if (dto.StartTime.HasValue || dto.EndTime.HasValue)
+            {
+                var exists = await _timeSlotRepository.ExistsTimeSlotAsync(newStartTime, newEndTime, slotId);
+                if (exists)
+                    throw new Exception("A time slot with this start time and end time already exists.");
+
+                slot.StartTime = newStartTime;
+                slot.EndTime = newEndTime;
+            }
+
+            if (dto.CarCapacity.HasValue)
+            {
+                if (dto.CarCapacity.Value < 0)
+                    throw new Exception("Capacity cannot be negative");
+                slot.CarCapacity = dto.CarCapacity.Value;
+            }
+
+            if (dto.BikeCapacity.HasValue)
+            {
+                if (dto.BikeCapacity.Value < 0)
+                    throw new Exception("Capacity cannot be negative");
+                slot.BikeCapacity = dto.BikeCapacity.Value;
+            }
+
+            if (dto.IsActive.HasValue)
+            {
+                slot.IsActive = dto.IsActive.Value;
+            }
+
             await _timeSlotRepository.UpdateTimeSlotAsync(slot);
 
             return new TimeSlotDto
@@ -127,6 +165,11 @@ namespace HybridWash.Services.Implementations
                 BikeCapacity = slot.BikeCapacity,
                 IsActive = slot.IsActive
             };
+        }
+
+        public async Task<TimeSlotDto> ToggleSlotStatusAsync(int slotId, bool isActive)
+        {
+            return await UpdateTimeSlotAsync(slotId, new UpdateTimeSlotDto { IsActive = isActive });
         }
     }
 }

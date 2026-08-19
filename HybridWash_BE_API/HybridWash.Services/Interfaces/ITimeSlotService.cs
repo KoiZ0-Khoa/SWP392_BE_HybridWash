@@ -14,6 +14,7 @@ namespace HybridWash.Services.Interfaces
         Task<TimeSlotDto> CreateTimeSlotAsync(CreateTimeSlotDto dto);
         Task<List<AvailableSlotDto>> GetAvailableSlotsAsync(DateOnly date);
         Task<TimeSlotDto?> GetTimeSlotByIdAsync(int slotId);
+        Task<TimeSlotDto> UpdateTimeSlotAsync(int slotId, UpdateTimeSlotDto dto);
         Task<TimeSlotDto> ToggleSlotStatusAsync(int slotId, bool isActive);
     }
 }

@@ -67,11 +67,11 @@ namespace HybridWash_BE_API.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}/status")]
-        public async Task<IActionResult> ToggleStatus(int id, [FromBody] UpdateSlotStatusDto dto)
+        public async Task<IActionResult> UpdateTimeSlot(int id, [FromBody] UpdateTimeSlotDto dto)
         {
             try
             {
-                var result = await _timeSlotService.ToggleSlotStatusAsync(id, dto.IsActive);
+                var result = await _timeSlotService.UpdateTimeSlotAsync(id, dto);
                 return Ok(new { Success = true, Data = result });
             }
             catch (Exception ex)
@@ -79,10 +79,5 @@ namespace HybridWash_BE_API.Controllers
                 return BadRequest(new { Message = ex.Message });
             }
         }
-    }
-
-    public class UpdateSlotStatusDto
-    {
-        public bool IsActive { get; set; }
     }
 }

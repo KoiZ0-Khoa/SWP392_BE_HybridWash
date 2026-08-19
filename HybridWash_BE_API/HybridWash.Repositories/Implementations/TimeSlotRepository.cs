@@ -32,6 +32,14 @@ namespace HybridWash.Repositories.Implementations
             await _context.SaveChangesAsync();
         }
 
+        public async Task<bool> ExistsTimeSlotAsync(TimeOnly startTime, TimeOnly endTime, int? excludeSlotId = null)
+        {
+            return await _context.TimeSlots
+                .AnyAsync(t => (!excludeSlotId.HasValue || t.SlotId != excludeSlotId.Value)
+                            && t.StartTime == startTime
+                            && t.EndTime == endTime);
+        }
+
         public async Task<(int CarCount, int BikeCount)> CountBookingsInSlotAsync(int slotId, DateOnly bookingDate)
         {
             var validBookings = _context.Bookings
