@@ -65,12 +65,6 @@ public class LoyaltyRepository : ILoyaltyRepository
                 .FirstOrDefaultAsync(item => item.BookingId == bookingId)
                 ?? throw new KeyNotFoundException("Booking not found.");
 
-            booking.Status = "Completed";
-            foreach (var addOn in booking.BookingAddOns)
-            {
-                addOn.Status = "Completed";
-            }
-
             var existingEarnTransaction = await _context.PointLedgers
                 .FirstOrDefaultAsync(item =>
                     item.BookingId == bookingId
@@ -78,9 +72,26 @@ public class LoyaltyRepository : ILoyaltyRepository
 
             if (existingEarnTransaction != null)
             {
-                await _context.SaveChangesAsync();
+                if (booking.Status is not ("Completed" or "CheckedOut"))
+                {
+                    throw new InvalidOperationException(
+                        $"Booking #{bookingId} already has an Earn ledger but its status is {booking.Status}.");
+                }
+
                 await transaction.CommitAsync();
                 return (0, booking.CustomerId);
+            }
+
+            if (booking.Status != "Washing")
+            {
+                throw new InvalidOperationException(
+                    $"Cannot complete booking from status {booking.Status}.");
+            }
+
+            booking.Status = "Completed";
+            foreach (var addOn in booking.BookingAddOns)
+            {
+                addOn.Status = "Completed";
             }
 
             if (!booking.CustomerId.HasValue)
