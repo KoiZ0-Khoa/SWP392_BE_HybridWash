@@ -1,3 +1,4 @@
+using HybridWash.Entities.Models;
 using HybridWash.Repositories.Interfaces;
 using HybridWash.Services.DTOs.Loyalty;
 using HybridWash.Services.Interfaces;
@@ -88,12 +89,71 @@ public class LoyaltyService : ILoyaltyService
 
     public async Task<int> CompleteBookingAndEarnPointsAsync(int bookingId, DateTime completedAt)
     {
-        var result = await _loyaltyRepository.CompleteBookingAndEarnPointsAsync(
-            bookingId,
-            _vndPerPoint,
-            completedAt);
+        var result = await _loyaltyRepository.ExecuteInSerializableTransactionAsync(async () =>
+        {
+            var booking = await _loyaltyRepository.GetBookingForUpdateAsync(bookingId)
+                ?? throw new KeyNotFoundException("Booking not found.");
 
-        if (result.CustomerId.HasValue)
+            var existingEarnTransaction = await _loyaltyRepository
+                .GetEarnTransactionByBookingIdAsync(bookingId);
+
+            if (existingEarnTransaction != null)
+            {
+                if (booking.Status is not ("Completed" or "CheckedOut"))
+                {
+                    throw new InvalidOperationException(
+                        $"Booking #{bookingId} already has an Earn ledger but its status is {booking.Status}.");
+                }
+
+                return new EarnOperationResult(0, booking.CustomerId, false);
+            }
+
+            if (booking.Status != "Washing")
+            {
+                throw new InvalidOperationException(
+                    $"Cannot complete booking from status {booking.Status}.");
+            }
+
+            booking.Status = "Completed";
+            foreach (var addOn in booking.BookingAddOns)
+            {
+                addOn.Status = "Completed";
+            }
+
+            if (!booking.CustomerId.HasValue)
+            {
+                await _loyaltyRepository.SaveChangesAsync();
+                return new EarnOperationResult(0, null, false);
+            }
+
+            var customer = await _loyaltyRepository.GetCustomerForUpdateAsync(
+                    booking.CustomerId.Value)
+                ?? throw new KeyNotFoundException("Customer not found.");
+            var amountSpent = Math.Max(booking.FinalPrice ?? 0, 0);
+            var pointMultiplier = await _tierService.GetPointMultiplierAsync(
+                customer.CurrentTier);
+            var earnedPoints = decimal.ToInt32(Math.Floor(
+                amountSpent / _vndPerPoint * pointMultiplier));
+
+            customer.CurrentPoints = (customer.CurrentPoints ?? 0) + earnedPoints;
+            customer.TotalSpent = (customer.TotalSpent ?? 0) + amountSpent;
+
+            _loyaltyRepository.AddPointLedger(new PointLedger
+            {
+                CustomerId = customer.CustomerId,
+                BookingId = booking.BookingId,
+                Points = earnedPoints,
+                TransactionType = "Earn",
+                Description = $"Earned from completed booking #{booking.BookingId}",
+                ExpireDate = completedAt.AddMonths(12),
+                CreatedAt = completedAt
+            });
+
+            await _loyaltyRepository.SaveChangesAsync();
+            return new EarnOperationResult(earnedPoints, customer.CustomerId, true);
+        });
+
+        if (result.WasEarnProcessed && result.CustomerId.HasValue)
         {
             await _tierService.ReviewAfterCompletedBookingAsync(
                 result.CustomerId.Value,
@@ -105,12 +165,80 @@ public class LoyaltyService : ILoyaltyService
 
     public async Task<PointExpiryResultDTO> ExpirePointsAsync(DateTime processedAt)
     {
-        var result = await _loyaltyRepository.ExpirePointsAsync(processedAt);
-        return new PointExpiryResultDTO
+        return await _loyaltyRepository.ExecuteInSerializableTransactionAsync(async () =>
         {
-            ProcessedCustomers = result.ProcessedCustomers,
-            ProcessedEarnTransactions = result.ProcessedEarnTransactions,
-            ExpiredPoints = result.ExpiredPoints
-        };
+            var customers = await _loyaltyRepository
+                .GetCustomersWithUnprocessedExpiredPointsAsync(processedAt);
+            var result = new PointExpiryResultDTO();
+
+            foreach (var customer in customers)
+            {
+                var ledgers = customer.PointLedgers
+                    .OrderBy(item => item.CreatedAt)
+                    .ThenBy(item => item.TransactionId)
+                    .ToList();
+                var earns = ledgers
+                    .Where(item => item.TransactionType == "Earn" && item.Points > 0)
+                    .ToList();
+
+                // Redemptions and previous expirations consume the oldest earned
+                // points first, so only the unused part of an Earn can expire.
+                var deductionsToAllocate = ledgers
+                    .Where(item => item.Points < 0)
+                    .Sum(item => -(long)item.Points);
+                var remainingPoints = new Dictionary<int, int>();
+                foreach (var earn in earns)
+                {
+                    var consumed = (int)Math.Min(earn.Points, deductionsToAllocate);
+                    remainingPoints[earn.TransactionId] = earn.Points - consumed;
+                    deductionsToAllocate -= consumed;
+                }
+
+                var processedForCustomer = false;
+                var availableBalance = Math.Max(customer.CurrentPoints ?? 0, 0);
+                foreach (var earn in earns.Where(item =>
+                    item.ExpireDate <= processedAt
+                    && !ledgers.Any(expiration =>
+                        expiration.TransactionType == "Expire"
+                        && expiration.SourceTransactionId == item.TransactionId)))
+                {
+                    var unusedPoints = remainingPoints[earn.TransactionId];
+                    var pointsToExpire = Math.Min(unusedPoints, availableBalance);
+                    var expiration = new PointLedger
+                    {
+                        CustomerId = customer.CustomerId,
+                        BookingId = earn.BookingId,
+                        SourceTransactionId = earn.TransactionId,
+                        Points = -pointsToExpire,
+                        TransactionType = "Expire",
+                        Description = pointsToExpire > 0
+                            ? $"Expired unused points from earn transaction #{earn.TransactionId}"
+                            : $"Expiration processed for earn transaction #{earn.TransactionId}; no unused points remained",
+                        CreatedAt = processedAt
+                    };
+
+                    _loyaltyRepository.AddPointLedger(expiration);
+                    ledgers.Add(expiration);
+                    availableBalance -= pointsToExpire;
+                    result.ExpiredPoints += pointsToExpire;
+                    result.ProcessedEarnTransactions++;
+                    processedForCustomer = true;
+                }
+
+                if (processedForCustomer)
+                {
+                    customer.CurrentPoints = availableBalance;
+                    result.ProcessedCustomers++;
+                }
+            }
+
+            await _loyaltyRepository.SaveChangesAsync();
+            return result;
+        });
     }
+
+    private sealed record EarnOperationResult(
+        int EarnedPoints,
+        int? CustomerId,
+        bool WasEarnProcessed);
 }
