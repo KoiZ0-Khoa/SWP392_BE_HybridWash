@@ -28,11 +28,11 @@ public class IncidentReportImageService : IIncidentReportImageService
         string requesterRole,
         CancellationToken cancellationToken = default)
     {
-        if (imageNumber is not (1 or 2))
+        if (imageNumber is < 1 or > 5)
         {
             throw new ArgumentOutOfRangeException(
                 nameof(imageNumber),
-                "Image number must be 1 or 2.");
+                "Image number must be between 1 and 5.");
         }
 
         var report = await _incidentReportRepository.GetByIdAsync(reportId)
@@ -49,9 +49,15 @@ public class IncidentReportImageService : IIncidentReportImageService
                 "You do not have permission to view this incident report image.");
         }
 
-        var fileUrlOrKey = imageNumber == 1
-            ? report.ReportedImage1
-            : report.ReportedImage2;
+        var fileUrlOrKey = imageNumber switch
+        {
+            1 => report.ReportedImage1,
+            2 => report.ReportedImage2,
+            3 => report.ReportedImage3,
+            4 => report.ReportedImage4,
+            5 => report.ReportedImage5,
+            _ => null
+        };
         if (string.IsNullOrWhiteSpace(fileUrlOrKey))
         {
             throw new FileNotFoundException("Incident report image not found.");

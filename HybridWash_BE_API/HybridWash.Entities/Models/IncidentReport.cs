@@ -14,8 +14,10 @@ public partial class IncidentReport
     public int? CustomerId { get; set; }
 
     public string? ReportedImage1 { get; set; }
-
     public string? ReportedImage2 { get; set; }
+    public string? ReportedImage3 { get; set; }
+    public string? ReportedImage4 { get; set; }
+    public string? ReportedImage5 { get; set; }
 
     [Required]
     [MaxLength(1000)]
