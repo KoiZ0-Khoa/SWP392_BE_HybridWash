@@ -16,7 +16,7 @@ public class UpsertRewardDTO
     [Range(1, int.MaxValue)]
     public int PointCost { get; set; }
 
-    [Range(typeof(decimal), "0", "9999999999999999")]
+    [Range(typeof(decimal), "0.01", "9999999999999999")]
     public decimal? DiscountValue { get; set; }
 
     public int? ServiceId { get; set; }

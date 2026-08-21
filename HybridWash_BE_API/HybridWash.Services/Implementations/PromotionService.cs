@@ -164,6 +164,13 @@ public class PromotionService : IPromotionService
                 throw new ArgumentException("Percent DiscountValue cannot exceed 100.");
             }
 
+            if (discountType == "Percent"
+                && request.MaxDiscount.HasValue
+                && request.MaxDiscount <= 0)
+            {
+                throw new ArgumentException("MaxDiscount must be greater than 0 when provided.");
+            }
+
             if (discountType == "Fixed" && request.MaxDiscount.HasValue)
             {
                 throw new ArgumentException("MaxDiscount is only used for Percent discount.");

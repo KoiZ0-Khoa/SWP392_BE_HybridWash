@@ -61,6 +61,7 @@ public class LoyaltyService : ILoyaltyService
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(page, 1);
         ArgumentOutOfRangeException.ThrowIfLessThan(pageSize, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(pageSize, 100);
 
         var (transactions, totalCount) = await _loyaltyRepository.GetPointTransactionsAsync(
             customerId,
@@ -89,6 +90,12 @@ public class LoyaltyService : ILoyaltyService
 
     public async Task<int> CompleteBookingAndEarnPointsAsync(int bookingId, DateTime completedAt)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(bookingId, 1);
+        if (completedAt == default)
+        {
+            throw new ArgumentException("CompletedAt is required.", nameof(completedAt));
+        }
+
         var result = await _loyaltyRepository.ExecuteInSerializableTransactionAsync(async () =>
         {
             var booking = await _loyaltyRepository.GetBookingForUpdateAsync(bookingId)

@@ -40,6 +40,10 @@ public class AdminTierRulesController : ControllerBase
         {
             return BadRequest(new { Message = ex.Message });
         }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { Message = ex.Message });
+        }
     }
 
     [HttpPost("review")]

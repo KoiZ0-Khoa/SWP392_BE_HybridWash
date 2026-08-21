@@ -8,25 +8,43 @@ internal static class BenefitRules
 
     public static string NormalizeTier(string value, bool allowAll)
     {
-        if (allowAll && value.Equals("All", StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new ArgumentException("Tier is required.");
+        }
+
+        var normalized = value.Trim();
+        if (allowAll && normalized.Equals("All", StringComparison.OrdinalIgnoreCase))
         {
             return "All";
         }
 
-        return TierOrder.FirstOrDefault(tier => tier.Equals(value, StringComparison.OrdinalIgnoreCase))
+        return TierOrder.FirstOrDefault(tier => tier.Equals(normalized, StringComparison.OrdinalIgnoreCase))
             ?? throw new ArgumentException("Tier must be Member, Silver, Gold, Platinum or All.");
     }
 
     public static string NormalizeType(string value)
     {
-        return BenefitTypes.FirstOrDefault(type => type.Equals(value, StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new ArgumentException("Type is required.");
+        }
+
+        var normalized = value.Trim();
+        return BenefitTypes.FirstOrDefault(type => type.Equals(normalized, StringComparison.OrdinalIgnoreCase))
             ?? throw new ArgumentException("Type must be Discount, FreeWash or AddOn.");
     }
 
     public static string NormalizeDiscountType(string value)
     {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new ArgumentException("DiscountType is required.");
+        }
+
+        var normalized = value.Trim();
         return DiscountTypes.FirstOrDefault(type =>
-            type.Equals(value, StringComparison.OrdinalIgnoreCase))
+            type.Equals(normalized, StringComparison.OrdinalIgnoreCase))
             ?? throw new ArgumentException("DiscountType must be Fixed or Percent.");
     }
 

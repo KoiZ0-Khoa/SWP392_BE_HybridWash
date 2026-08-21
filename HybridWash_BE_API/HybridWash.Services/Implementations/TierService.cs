@@ -51,6 +51,15 @@ public class TierService : ITierService
             throw new ArgumentException("Member tier cannot be deactivated.");
         }
 
+        ValidateRuleValues(normalizedTier, request, qualificationMode);
+
+        if (!request.IsActive
+            && await _tierRepository.HasCustomersInTierAsync(normalizedTier))
+        {
+            throw new InvalidOperationException(
+                $"Tier {normalizedTier} cannot be deactivated while customers are still assigned to it.");
+        }
+
         var rule = await _tierRepository.GetRuleByNameAsync(normalizedTier, tracking: true);
         if (rule == null)
         {
@@ -230,7 +239,9 @@ public class TierService : ITierService
 
     private async Task<TierRule> GetRuleOrMemberAsync(string? tierName)
     {
-        var rules = await _tierRepository.GetRulesAsync();
+        var rules = (await _tierRepository.GetRulesAsync())
+            .Where(rule => rule.IsActive)
+            .ToList();
         return FindRule(rules, tierName)
             ?? FindRule(rules, "Member")
             ?? throw new InvalidOperationException("Member tier rule is missing.");
@@ -291,6 +302,55 @@ public class TierService : ITierService
                 throw new ArgumentException(
                     "Higher tiers cannot require less spend or fewer visits than lower tiers.");
             }
+
+            if (activeRules[index].BookingWindowDays < activeRules[index - 1].BookingWindowDays)
+            {
+                throw new ArgumentException(
+                    "Higher tiers cannot have a shorter booking window than lower tiers.");
+            }
+
+            if (activeRules[index].PointMultiplier < activeRules[index - 1].PointMultiplier)
+            {
+                throw new ArgumentException(
+                    "Higher tiers cannot have a lower point multiplier than lower tiers.");
+            }
+        }
+    }
+
+    private static void ValidateRuleValues(
+        string tierName,
+        UpdateTierRuleDTO request,
+        string qualificationMode)
+    {
+        if (request.PointMultiplier <= 0)
+        {
+            throw new ArgumentException("PointMultiplier must be greater than zero.");
+        }
+
+        if (tierName == "Member")
+        {
+            if (request.MinimumSpend != 0 || request.MinimumVisits != 0)
+            {
+                throw new ArgumentException(
+                    "Member tier must have zero minimum spend and visits.");
+            }
+
+            return;
+        }
+
+        if (qualificationMode == "OR"
+            && (request.MinimumSpend <= 0 || request.MinimumVisits <= 0))
+        {
+            throw new ArgumentException(
+                "OR tier rules require both spend and visit thresholds to be greater than zero.");
+        }
+
+        if (qualificationMode == "AND"
+            && request.MinimumSpend <= 0
+            && request.MinimumVisits <= 0)
+        {
+            throw new ArgumentException(
+                "Higher tiers must require spend, visits, or both.");
         }
     }
 

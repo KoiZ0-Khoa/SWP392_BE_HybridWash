@@ -37,6 +37,12 @@ public class TierRepository : ITierRepository
             customer.CustomerId == customerId);
     }
 
+    public Task<bool> HasCustomersInTierAsync(string tierName)
+    {
+        return _context.Customers.AnyAsync(customer =>
+            customer.CurrentTier == tierName);
+    }
+
     public async Task<IReadOnlyList<int>> GetCustomerIdsForReviewAsync(DateTime? reviewedBefore = null)
     {
         var query = _context.Customers.AsNoTracking();

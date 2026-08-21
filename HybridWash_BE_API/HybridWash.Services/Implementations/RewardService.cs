@@ -29,6 +29,11 @@ public class RewardService : IRewardService
 
     public async Task<RewardDTO> CreateAsync(UpsertRewardDTO request)
     {
+        if (string.IsNullOrWhiteSpace(request.RewardName))
+        {
+            throw new ArgumentException("RewardName is required.");
+        }
+
         var rewardName = request.RewardName.Trim();
         if (await _rewardRepository.RewardNameExistsAsync(rewardName))
         {
@@ -64,6 +69,11 @@ public class RewardService : IRewardService
         if (reward == null)
         {
             return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(request.RewardName))
+        {
+            throw new ArgumentException("RewardName is required.");
         }
 
         var rewardName = request.RewardName.Trim();
@@ -120,11 +130,74 @@ public class RewardService : IRewardService
             throw new ArgumentException("RequestId is required.");
         }
 
-        var customer = await GetCustomerAsync(customerId);
-        var reward = await _rewardRepository.GetByIdAsync(rewardId)
-            ?? throw new KeyNotFoundException("Reward not found.");
-        var now = DateTime.UtcNow;
+        if (rewardId <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(rewardId));
+        }
 
+        return await _rewardRepository.ExecuteInSerializableTransactionAsync(async () =>
+        {
+            var existing = await _rewardRepository.GetRedemptionByRequestIdAsync(requestId);
+            if (existing != null)
+            {
+                if (existing.CustomerId != customerId || existing.RewardId != rewardId)
+                {
+                    throw new InvalidOperationException(
+                        "RequestId has already been used for another reward redemption.");
+                }
+
+                return Map(existing);
+            }
+
+            var customer = await _rewardRepository.GetCustomerForUpdateAsync(customerId)
+                ?? throw new KeyNotFoundException("Customer not found.");
+            var reward = await _rewardRepository.GetByIdForUpdateAsync(rewardId)
+                ?? throw new KeyNotFoundException("Reward not found.");
+            var now = DateTime.UtcNow;
+
+            ValidateRewardAvailability(reward, customer, now);
+            await ValidateStoredRewardConfigurationAsync(reward);
+
+            if ((customer.CurrentPoints ?? 0) < reward.PointCost)
+            {
+                throw new InvalidOperationException("Insufficient points for this reward.");
+            }
+
+            customer.CurrentPoints = (customer.CurrentPoints ?? 0) - reward.PointCost;
+            var redemption = new RewardRedemption
+            {
+                RequestId = requestId,
+                CustomerId = customerId,
+                RewardId = rewardId,
+                PointsSpent = reward.PointCost,
+                Status = "Issued",
+                RedeemedAt = now,
+                Reward = reward
+            };
+
+            _rewardRepository.AddRedemption(redemption);
+            await _rewardRepository.SaveChangesAsync();
+
+            _rewardRepository.AddPointLedger(new PointLedger
+            {
+                CustomerId = customerId,
+                RewardRedemptionId = redemption.RedemptionId,
+                Points = -reward.PointCost,
+                TransactionType = "Redeem",
+                Description = $"Redeemed reward: {reward.RewardName}",
+                CreatedAt = now
+            });
+
+            await _rewardRepository.SaveChangesAsync();
+            return Map(redemption);
+        });
+    }
+
+    private static void ValidateRewardAvailability(
+        Reward reward,
+        Customer customer,
+        DateTime now)
+    {
         if (!reward.IsActive
             || (reward.ValidFrom.HasValue && reward.ValidFrom > now)
             || (reward.ValidTo.HasValue && reward.ValidTo < now))
@@ -136,11 +209,31 @@ public class RewardService : IRewardService
         {
             throw new InvalidOperationException("Customer tier is not eligible for this reward.");
         }
+    }
 
-        var redemption = await _rewardRepository.RedeemAsync(customerId, rewardId, requestId, now)
-            ?? throw new InvalidOperationException("Insufficient points for this reward.");
+    private async Task ValidateStoredRewardConfigurationAsync(Reward reward)
+    {
+        if (reward.PointCost <= 0)
+        {
+            throw new InvalidOperationException("Reward point cost is invalid.");
+        }
 
-        return Map(redemption);
+        var type = BenefitRules.NormalizeType(reward.RewardType);
+        if (type == "Discount")
+        {
+            if (!reward.DiscountValue.HasValue || reward.DiscountValue <= 0)
+            {
+                throw new InvalidOperationException(
+                    "Discount reward configuration is incomplete.");
+            }
+        }
+        else if (!reward.ServiceId.HasValue)
+        {
+            throw new InvalidOperationException(
+                $"{type} reward configuration is incomplete.");
+        }
+
+        await ValidateRewardServiceAsync(reward.ServiceId);
     }
 
     public async Task<IReadOnlyList<RewardRedemptionDTO>> GetRedemptionsAsync(int customerId)
@@ -166,15 +259,32 @@ public class RewardService : IRewardService
             throw new ArgumentException("Discount reward requires a positive DiscountValue.");
         }
 
-        if ((type == "FreeWash" || type == "AddOn") && !request.ServiceId.HasValue)
+        if (type == "Discount")
+        {
+            await ValidateRewardServiceAsync(request.ServiceId);
+            return;
+        }
+
+        if (!request.ServiceId.HasValue)
         {
             throw new ArgumentException("FreeWash and AddOn rewards require a ServiceId.");
         }
 
-        if (request.ServiceId.HasValue
-            && !await _rewardRepository.ServiceExistsAsync(request.ServiceId.Value))
+        if (request.DiscountValue.HasValue)
         {
-            throw new ArgumentException("Service not found.");
+            throw new ArgumentException(
+                "DiscountValue can only be used for Discount rewards.");
+        }
+
+        await ValidateRewardServiceAsync(request.ServiceId);
+    }
+
+    private async Task ValidateRewardServiceAsync(int? serviceId)
+    {
+        if (serviceId.HasValue
+            && !await _rewardRepository.ActiveServiceExistsAsync(serviceId.Value))
+        {
+            throw new ArgumentException("Service not found or inactive.");
         }
     }
 

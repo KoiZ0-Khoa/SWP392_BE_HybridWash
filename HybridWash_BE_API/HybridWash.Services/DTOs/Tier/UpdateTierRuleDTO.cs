@@ -20,7 +20,7 @@ public class UpdateTierRuleDTO
     [Range(1, 365)]
     public int BookingWindowDays { get; set; }
 
-    [Range(typeof(decimal), "0", "10")]
+    [Range(typeof(decimal), "0.01", "10")]
     public decimal PointMultiplier { get; set; }
 
     [MaxLength(500)]
