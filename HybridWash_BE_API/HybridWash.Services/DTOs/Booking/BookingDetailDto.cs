@@ -45,8 +45,14 @@ namespace HybridWash.Services.DTOs.Booking
         public string? QrCode { get; set; }
         public string? IncidentImage1 { get; set; }
         public string? IncidentImage2 { get; set; }
+        public string? IncidentImage3 { get; set; }
+        public string? IncidentImage4 { get; set; }
+        public string? IncidentImage5 { get; set; }
         public string? IncidentImage1ApiPath { get; set; }
         public string? IncidentImage2ApiPath { get; set; }
+        public string? IncidentImage3ApiPath { get; set; }
+        public string? IncidentImage4ApiPath { get; set; }
+        public string? IncidentImage5ApiPath { get; set; }
         public ParkingReceiptDto? ParkingReceipt { get; set; }
         public DateTime? CreatedAt { get; set; }
     }

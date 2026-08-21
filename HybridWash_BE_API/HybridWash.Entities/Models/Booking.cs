@@ -38,8 +38,10 @@ public partial class Booking
     public DateTime? ActualWashTime { get; set; }
 
     public string? IncidentImage1 { get; set; }
-
     public string? IncidentImage2 { get; set; }
+    public string? IncidentImage3 { get; set; }
+    public string? IncidentImage4 { get; set; }
+    public string? IncidentImage5 { get; set; }
 
     public string? StaffNote { get; set; }
 

@@ -9,8 +9,10 @@ namespace HybridWash.Services.DTOs
         public int BookingId { get; set; }
 
         public IFormFile? IncidentImage1 { get; set; }
-
         public IFormFile? IncidentImage2 { get; set; }
+        public IFormFile? IncidentImage3 { get; set; }
+        public IFormFile? IncidentImage4 { get; set; }
+        public IFormFile? IncidentImage5 { get; set; }
 
         public string? StaffNote { get; set; }
     }

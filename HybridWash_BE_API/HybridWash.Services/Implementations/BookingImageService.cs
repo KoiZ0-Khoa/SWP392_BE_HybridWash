@@ -28,10 +28,10 @@ public class BookingImageService : IBookingImageService
         string requesterRole,
         CancellationToken cancellationToken = default)
     {
-        if (imageNumber is not (1 or 2))
+        if (imageNumber is < 1 or > 5)
             throw new ArgumentOutOfRangeException(
                 nameof(imageNumber),
-                "Image number must be 1 or 2.");
+                "Image number must be between 1 and 5.");
 
         var booking = await _bookingRepository.GetBookingByIdWithDetailsAsync(bookingId)
             ?? throw new KeyNotFoundException("Booking not found.");
@@ -45,9 +45,15 @@ public class BookingImageService : IBookingImageService
             throw new UnauthorizedAccessException(
                 "You do not have permission to view this booking image.");
 
-        var fileUrlOrKey = imageNumber == 1
-            ? booking.IncidentImage1
-            : booking.IncidentImage2;
+        var fileUrlOrKey = imageNumber switch
+        {
+            1 => booking.IncidentImage1,
+            2 => booking.IncidentImage2,
+            3 => booking.IncidentImage3,
+            4 => booking.IncidentImage4,
+            5 => booking.IncidentImage5,
+            _ => null
+        };
         if (string.IsNullOrWhiteSpace(fileUrlOrKey))
             throw new FileNotFoundException("Incident image not found.");
 

@@ -72,6 +72,9 @@ public partial class AutowashContext : DbContext
                 .IsUnicode(false);
             entity.Property(e => e.IncidentImage1).HasMaxLength(500);
             entity.Property(e => e.IncidentImage2).HasMaxLength(500);
+            entity.Property(e => e.IncidentImage3).HasMaxLength(500);
+            entity.Property(e => e.IncidentImage4).HasMaxLength(500);
+            entity.Property(e => e.IncidentImage5).HasMaxLength(500);
             entity.Property(e => e.OriginalPrice)
                 .HasDefaultValue(0m)
                 .HasColumnType("decimal(18, 2)");

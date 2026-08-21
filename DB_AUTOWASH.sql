@@ -158,6 +158,9 @@ CREATE TABLE Bookings (
     -- Hình ảnh xe trước khi rửa & Ghi chú của Staff
     IncidentImage1 NVARCHAR(500) NULL,
     IncidentImage2 NVARCHAR(500) NULL,
+    IncidentImage3 NVARCHAR(500) NULL,
+    IncidentImage4 NVARCHAR(500) NULL,
+    IncidentImage5 NVARCHAR(500) NULL,
     StaffNote NVARCHAR(1000) NULL,
 
     -- Trạng thái flow

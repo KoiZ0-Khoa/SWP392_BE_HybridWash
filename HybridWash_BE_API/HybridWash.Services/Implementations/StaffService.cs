@@ -117,6 +117,21 @@ namespace HybridWash.Services.Implementations
                 booking.IncidentImage2 = await _awsS3Service.UploadFileAsync(request.IncidentImage2, bucketName, "incident-images");
             }
 
+            if (request.IncidentImage3 != null && request.IncidentImage3.Length > 0)
+            {
+                booking.IncidentImage3 = await _awsS3Service.UploadFileAsync(request.IncidentImage3, bucketName, "incident-images");
+            }
+
+            if (request.IncidentImage4 != null && request.IncidentImage4.Length > 0)
+            {
+                booking.IncidentImage4 = await _awsS3Service.UploadFileAsync(request.IncidentImage4, bucketName, "incident-images");
+            }
+
+            if (request.IncidentImage5 != null && request.IncidentImage5.Length > 0)
+            {
+                booking.IncidentImage5 = await _awsS3Service.UploadFileAsync(request.IncidentImage5, bucketName, "incident-images");
+            }
+
             if (!string.IsNullOrWhiteSpace(request.StaffNote))
             {
                 booking.StaffNote = request.StaffNote;
