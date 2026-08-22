@@ -36,7 +36,7 @@ namespace HybridWash.Services.BackgroundServices
                 }
 
                 // Quét mỗi 5 phút
-                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+                await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
             }
         }
 
@@ -73,7 +73,7 @@ namespace HybridWash.Services.BackgroundServices
             using var scope = _serviceProvider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<AutowashContext>();
 
-            var tenMinutesAgo = DateTime.UtcNow.AddMinutes(-1);
+            var tenMinutesAgo = DateTime.UtcNow.AddMinutes(-10);
 
             var expiredPendingBookings = await context.Bookings
                 .Include(b => b.RewardRedemptions)

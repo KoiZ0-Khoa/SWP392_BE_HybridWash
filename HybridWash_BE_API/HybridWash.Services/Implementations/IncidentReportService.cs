@@ -33,15 +33,20 @@ namespace HybridWash.Services.Implementations
 
             string? url1 = null;
             string? url2 = null;
+            string? url3 = null;
+            string? url4 = null;
+            string? url5 = null;
 
             if (request.Image1 != null)
-            {
                 url1 = await _s3Service.UploadFileAsync(request.Image1, _bucketName, "incident-reports");
-            }
             if (request.Image2 != null)
-            {
                 url2 = await _s3Service.UploadFileAsync(request.Image2, _bucketName, "incident-reports");
-            }
+            if (request.Image3 != null)
+                url3 = await _s3Service.UploadFileAsync(request.Image3, _bucketName, "incident-reports");
+            if (request.Image4 != null)
+                url4 = await _s3Service.UploadFileAsync(request.Image4, _bucketName, "incident-reports");
+            if (request.Image5 != null)
+                url5 = await _s3Service.UploadFileAsync(request.Image5, _bucketName, "incident-reports");
 
             var report = new IncidentReport
             {
@@ -50,6 +55,9 @@ namespace HybridWash.Services.Implementations
                 CustomerNote = request.CustomerNote,
                 ReportedImage1 = url1,
                 ReportedImage2 = url2,
+                ReportedImage3 = url3,
+                ReportedImage4 = url4,
+                ReportedImage5 = url5,
                 Status = "Pending"
             };
 
@@ -110,6 +118,9 @@ namespace HybridWash.Services.Implementations
                 CustomerName = report.Customer?.FullName,
                 Image1 = report.ReportedImage1,
                 Image2 = report.ReportedImage2,
+                Image3 = report.ReportedImage3,
+                Image4 = report.ReportedImage4,
+                Image5 = report.ReportedImage5,
                 CustomerNote = report.CustomerNote,
                 Status = report.Status,
                 ManagerNote = report.ManagerNote,

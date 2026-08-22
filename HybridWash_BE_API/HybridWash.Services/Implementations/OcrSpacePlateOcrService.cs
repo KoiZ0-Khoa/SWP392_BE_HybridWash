@@ -134,7 +134,18 @@ namespace HybridWash.Services.Implementations
                 else if (arr[i] == 'G') arr[i] = '6';
             }
 
-            return new string(arr);
+            var result = new string(arr);
+
+            const int maxPlateLength = 11;
+            const int minPlateLength = 7;
+
+            if (result.Length > maxPlateLength)
+                result = result[..maxPlateLength];
+
+            if (result.Length < minPlateLength)
+                return null;
+
+            return result;
         }
     }
 }
