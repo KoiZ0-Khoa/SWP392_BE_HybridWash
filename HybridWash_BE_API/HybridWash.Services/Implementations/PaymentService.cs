@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using HybridWash.Repositories.Data;
 using HybridWash.Services.DTOs.Payment;
@@ -17,12 +16,10 @@ public class PaymentService : IPaymentService
 {
     private readonly AutowashContext _context;
     private readonly PayOSClient _payOS;
-    private readonly ILoyaltyService _loyaltyService;
 
-    public PaymentService(AutowashContext context, IConfiguration configuration, ILoyaltyService loyaltyService)
+    public PaymentService(AutowashContext context, IConfiguration configuration)
     {
         _context = context;
-        _loyaltyService = loyaltyService;
 
         // Initialize PayOS
         var clientId = configuration["PayOS:ClientId"];
@@ -78,11 +75,14 @@ public class PaymentService : IPaymentService
             depositAmount = finalPrice == 0 ? 0 : Math.Min(systemParam.BikeDepositAmount, finalPrice);
         }
 
+        depositAmount = decimal.Round(depositAmount, 0, MidpointRounding.AwayFromZero);
+
   
         if (depositAmount <= 0)
         {
             booking.DepositAmount = 0;
             booking.Status = "Deposited";
+            booking.PaymentStatus = "Paid";
             await _context.SaveChangesAsync();
 
             return new PaymentResponseDTO
@@ -110,13 +110,19 @@ public class PaymentService : IPaymentService
         var paymentRequest = new CreatePaymentLinkRequest
         {
             OrderCode = orderCode,
-            Amount = (int)depositAmount,
+            Amount = decimal.ToInt32(depositAmount),
             Description = $"Deposit for booking {bookingId}",
             CancelUrl = string.IsNullOrWhiteSpace(cancelUrl) ? "https://hybridwash.vn/payment-cancel" : cancelUrl,
             ReturnUrl = string.IsNullOrWhiteSpace(returnUrl) ? "https://hybridwash.vn/payment-success" : returnUrl
         };
 
         var paymentLink = await _payOS.PaymentRequests.CreateAsync(paymentRequest);
+
+        if (booking.PaymentStatus == "Failed")
+        {
+            booking.PaymentStatus = "Unpaid";
+            await _context.SaveChangesAsync();
+        }
 
         string qrImageUrl = !string.IsNullOrEmpty(paymentLink.Bin) && !string.IsNullOrEmpty(paymentLink.AccountNumber)
             ? $"https://img.vietqr.io/image/{paymentLink.Bin}-{paymentLink.AccountNumber}-compact2.png?amount={paymentLink.Amount}&addInfo={Uri.EscapeDataString(paymentLink.Description ?? "")}&accountName={Uri.EscapeDataString(paymentLink.AccountName ?? "")}"
@@ -148,19 +154,23 @@ public class PaymentService : IPaymentService
             throw new Exception("Booking not found");
         }
 
-        if (booking.Status == "Completed" || booking.Status == "CheckedOut")
+        if (booking.Status != "Washing")
         {
-            throw new Exception("Booking is already completed and paid");
+            throw new Exception(
+                $"Final payment can only be created while the booking is Washing. Current status: {booking.Status}");
         }
 
-        if (booking.Status == "Cancelled" || booking.Status == "NoShow" || booking.Status == "RefundPending")
+        if (booking.PaymentStatus == "Paid")
         {
-            throw new Exception($"Cannot create payment for booking with status: {booking.Status}");
+            throw new Exception("This booking has already been fully paid");
         }
 
         decimal total = booking.FinalPrice ?? booking.OriginalPrice ?? 0;
         decimal deposit = booking.DepositAmount ?? 0;
-        decimal amountToPay = total - deposit;
+        decimal amountToPay = decimal.Round(
+            total - deposit,
+            0,
+            MidpointRounding.AwayFromZero);
 
         if (amountToPay <= 0)
         {
@@ -172,13 +182,19 @@ public class PaymentService : IPaymentService
         var paymentRequest = new CreatePaymentLinkRequest
         {
             OrderCode = orderCode,
-            Amount = (int)amountToPay,
+            Amount = decimal.ToInt32(amountToPay),
             Description = $"Final for booking {bookingId}",
             CancelUrl = string.IsNullOrWhiteSpace(cancelUrl) ? "https://hybridwash.vn/payment-cancel" : cancelUrl,
             ReturnUrl = string.IsNullOrWhiteSpace(returnUrl) ? "https://hybridwash.vn/payment-success" : returnUrl
         };
 
         var paymentLink = await _payOS.PaymentRequests.CreateAsync(paymentRequest);
+
+        if (booking.PaymentStatus == "Failed")
+        {
+            booking.PaymentStatus = deposit > 0 ? "PartiallyPaid" : "Unpaid";
+            await _context.SaveChangesAsync();
+        }
 
         string qrImageUrl = !string.IsNullOrEmpty(paymentLink.Bin) && !string.IsNullOrEmpty(paymentLink.AccountNumber)
             ? $"https://img.vietqr.io/image/{paymentLink.Bin}-{paymentLink.AccountNumber}-compact2.png?amount={paymentLink.Amount}&addInfo={Uri.EscapeDataString(paymentLink.Description ?? "")}&accountName={Uri.EscapeDataString(paymentLink.AccountName ?? "")}"
@@ -208,49 +224,89 @@ public class PaymentService : IPaymentService
 
             var verifiedData = await _payOS.Webhooks.VerifyAsync(webhook);
 
+            if (verifiedData == null)
+            {
+                return false;
+            }
+
             Console.WriteLine($"[PayOS Webhook] Verified successfully: Code={verifiedData.Code}, Desc={verifiedData.Description}");
 
-            if (verifiedData != null && verifiedData.Code == "00")
+            var desc = verifiedData.Description;
+            if (string.IsNullOrWhiteSpace(desc))
             {
-                var desc = verifiedData.Description;
-                if (!string.IsNullOrEmpty(desc))
+                Console.WriteLine("[PayOS Webhook] Description is missing; webhook acknowledged without updating a booking");
+                return true;
+            }
+
+            var isDeposit = desc.StartsWith("Deposit for booking ", StringComparison.OrdinalIgnoreCase);
+            var isFinal = desc.StartsWith("Final for booking ", StringComparison.OrdinalIgnoreCase);
+            if (!isDeposit && !isFinal)
+            {
+                Console.WriteLine($"[PayOS Webhook] Unknown description: {desc}");
+                return true;
+            }
+
+            var prefix = isDeposit ? "Deposit for booking " : "Final for booking ";
+            var bookingIdText = desc[prefix.Length..].Trim();
+            if (!int.TryParse(bookingIdText, out var bookingId))
+            {
+                Console.WriteLine($"[PayOS Webhook] Invalid booking reference: {desc}");
+                return true;
+            }
+
+            var booking = await _context.Bookings
+                .FirstOrDefaultAsync(item => item.BookingId == bookingId);
+            if (booking == null)
+            {
+                Console.WriteLine($"[PayOS Webhook] Booking #{bookingId} not found");
+                return false;
+            }
+
+            if (verifiedData.Code != "00")
+            {
+                if (booking.PaymentStatus != "Paid")
                 {
-                    if (desc.StartsWith("Deposit for booking ", StringComparison.OrdinalIgnoreCase))
-                    {
-                        string bookingIdStr = desc.Substring("Deposit for booking ".Length).Trim();
-                        if (int.TryParse(bookingIdStr, out int bookingId))
-                        {
-                            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.BookingId == bookingId);
-                            if (booking != null && booking.Status == "Pending")
-                            {
-                                booking.Status = "Deposited";
-                                await _context.SaveChangesAsync();
-                                Console.WriteLine($"[PayOS Webhook] Updated Booking #{bookingId} to Deposited");
-                            }
-                            else
-                            {
-                                Console.WriteLine($"[PayOS Webhook] Booking #{bookingId} not found or status not Pending (current: {booking?.Status})");
-                            }
-                        }
-                    }
-                    else if (desc.StartsWith("Final for booking ", StringComparison.OrdinalIgnoreCase))
-                    {
-                        string bookingIdStr = desc.Substring("Final for booking ".Length).Trim();
-                        if (int.TryParse(bookingIdStr, out int bookingId))
-                        {
-                            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.BookingId == bookingId);
-                            if (booking != null && booking.Status != "Completed" && booking.Status != "CheckedOut")
-                            {
-                                await _loyaltyService.CompleteBookingAndEarnPointsAsync(bookingId, DateTime.UtcNow);
-                                Console.WriteLine($"[PayOS Webhook] Completed Booking #{bookingId} and earned points");
-                            }
-                        }
-                    }
+                    booking.PaymentStatus = "Failed";
+                    await _context.SaveChangesAsync();
                 }
 
                 return true;
             }
 
+            var total = booking.FinalPrice ?? booking.OriginalPrice ?? 0;
+            var deposit = booking.DepositAmount ?? 0;
+            var expectedAmount = isDeposit
+                ? decimal.Round(deposit, 0, MidpointRounding.AwayFromZero)
+                : decimal.Round(
+                    Math.Max(total - deposit, 0),
+                    0,
+                    MidpointRounding.AwayFromZero);
+
+            if (verifiedData.Amount != expectedAmount)
+            {
+                throw new InvalidOperationException(
+                    $"Payment amount mismatch for booking #{bookingId}. Expected {expectedAmount}, received {verifiedData.Amount}.");
+            }
+
+            if (isDeposit)
+            {
+                booking.PaymentStatus = total - deposit <= 0
+                    ? "Paid"
+                    : "PartiallyPaid";
+
+                if (booking.Status == "Pending")
+                {
+                    booking.Status = "Deposited";
+                }
+            }
+            else
+            {
+                booking.PaymentStatus = "Paid";
+            }
+
+            await _context.SaveChangesAsync();
+            Console.WriteLine(
+                $"[PayOS Webhook] Updated Booking #{bookingId}: Status={booking.Status}, PaymentStatus={booking.PaymentStatus}");
             return true;
         }
         catch (Exception ex)

@@ -47,6 +47,8 @@ public partial class Booking
 
     public string? Status { get; set; }
 
+    public string PaymentStatus { get; set; } = "Unpaid";
+
     public string? QrCode { get; set; }
 
     public DateTime? CreatedAt { get; set; }

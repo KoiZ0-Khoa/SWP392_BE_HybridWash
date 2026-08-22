@@ -112,6 +112,12 @@ public class LoyaltyService : ILoyaltyService
                         $"Booking #{bookingId} already has an Earn ledger but its status is {booking.Status}.");
                 }
 
+                if (booking.PaymentStatus != "Paid")
+                {
+                    throw new InvalidOperationException(
+                        $"Booking #{bookingId} already has an Earn ledger but its payment status is {booking.PaymentStatus}.");
+                }
+
                 return new EarnOperationResult(0, booking.CustomerId, false);
             }
 
@@ -119,6 +125,12 @@ public class LoyaltyService : ILoyaltyService
             {
                 throw new InvalidOperationException(
                     $"Cannot complete booking from status {booking.Status}.");
+            }
+
+            if (booking.PaymentStatus != "Paid")
+            {
+                throw new InvalidOperationException(
+                    $"Cannot complete booking before full payment. Current payment status: {booking.PaymentStatus}.");
             }
 
             booking.Status = "Completed";

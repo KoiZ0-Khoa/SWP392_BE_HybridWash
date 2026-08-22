@@ -132,6 +132,7 @@ namespace HybridWash.Services.Implementations
                 OriginalPrice = service.Price,
                 FinalPrice = benefit.FinalPrice,
                 Status = "Pending",
+                PaymentStatus = "Unpaid",
                 QrCode = Guid.NewGuid().ToString("N"),
                 CreatedAt = DateTime.UtcNow
             };
@@ -620,6 +621,7 @@ namespace HybridWash.Services.Implementations
             AddOns = MapAddOns(b.BookingAddOns, b.RewardRedemptions),
             QrCode = b.QrCode,
             Status = b.Status,
+            PaymentStatus = b.PaymentStatus,
             CreatedAt = b.CreatedAt
         };
 
@@ -649,6 +651,7 @@ namespace HybridWash.Services.Implementations
             AppliedReward = MapAppliedReward(b.RewardRedemptions),
             AddOns = MapAddOns(b.BookingAddOns, b.RewardRedemptions),
             Status = b.Status,
+            PaymentStatus = b.PaymentStatus,
             StaffId = b.StaffId,
             StaffName = b.Staff?.FullName,
             ActualWashTime = b.ActualWashTime,

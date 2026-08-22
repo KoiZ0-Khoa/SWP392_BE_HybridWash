@@ -180,12 +180,26 @@ namespace HybridWash.Services.Implementations
 
             var licensePlate = booking.Vehicle?.LicensePlate ?? booking.GuestLicensePlate ?? "Không xác định";
 
-            if (booking.Status == "Pending" || booking.Status == "Confirmed" || booking.Status == "Deposited")
+            if (booking.Status != "Washing")
             {
-                throw new Exception($"Lỗi: Xe mang biển số {licensePlate} chưa check-in! Bạn không thể check-out xe chưa check-in.");
+                throw new Exception(
+                    $"Booking must be Washing before check-out. Current status: {booking.Status}.");
             }
 
+            if (!booking.CustomerId.HasValue && booking.PaymentStatus != "Paid")
+            {
+                // For walk-in guests, check-out also confirms that staff
+                // collected the remaining amount directly at the shop.
+                booking.PaymentStatus = "Paid";
+                await _staffRepository.UpdateBookingAsync(booking);
+                await _staffRepository.SaveChangesAsync();
+            }
 
+            if (booking.PaymentStatus != "Paid")
+            {
+                throw new Exception(
+                    $"Booking must be fully paid before check-out. Current payment status: {booking.PaymentStatus}.");
+            }
 
             await _loyaltyService.CompleteBookingAndEarnPointsAsync(
                 booking.BookingId,
@@ -270,6 +284,7 @@ namespace HybridWash.Services.Implementations
                     ?? booking.GuestVehicleType
                     ?? string.Empty,
                 Status = booking.Status ?? string.Empty,
+                PaymentStatus = booking.PaymentStatus,
                 SlotId = booking.SlotId,
                 ServiceId = booking.ServiceId,
                 ServiceName = booking.Service?.ServiceName,

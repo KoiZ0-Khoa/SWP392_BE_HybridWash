@@ -38,6 +38,7 @@ namespace HybridWash.Services.DTOs.Booking
         public AppliedRewardDto? AppliedReward { get; set; }
         public IReadOnlyList<BookingAddOnDto> AddOns { get; set; } = [];
         public string? Status { get; set; }
+        public string PaymentStatus { get; set; } = "Unpaid";
         public int? StaffId { get; set; }
         public string? StaffName { get; set; }
         public DateTime? ActualWashTime { get; set; }

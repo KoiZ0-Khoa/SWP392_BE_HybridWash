@@ -11,6 +11,7 @@ namespace HybridWash.Services.DTOs
         public string LicensePlate { get; set; } = null!;
         public string VehicleType { get; set; } = null!;
         public string Status { get; set; } = null!;
+        public string PaymentStatus { get; set; } = "Unpaid";
         public int SlotId { get; set; }
         public int ServiceId { get; set; }
         public string? ServiceName { get; set; }

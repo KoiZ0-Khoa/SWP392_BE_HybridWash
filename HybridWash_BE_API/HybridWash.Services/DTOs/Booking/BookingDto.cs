@@ -33,6 +33,7 @@ namespace HybridWash.Services.DTOs.Booking
         public IReadOnlyList<BookingAddOnDto> AddOns { get; set; } = [];
         public string? QrCode { get; set; }
         public string? Status { get; set; }
+        public string PaymentStatus { get; set; } = "Unpaid";
         public DateTime? CreatedAt { get; set; }
     }
 }

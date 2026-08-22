@@ -87,6 +87,10 @@ public partial class AutowashContext : DbContext
                 .HasMaxLength(20)
                 .IsUnicode(false)
                 .HasDefaultValue("Pending");
+            entity.Property(e => e.PaymentStatus)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasDefaultValue("Unpaid");
             entity.Property(e => e.QrCode)
                 .HasMaxLength(100)
                 .IsUnicode(false);
